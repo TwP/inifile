@@ -1,0 +1,9 @@
+README.txt
+lib/inifile.rb
+test/data/bad_1.ini
+test/data/bad_2.ini
+test/data/comment.ini
+test/data/good.ini
+test/data/mixed_comment.ini
+test/data/param.ini
+test/test_inifile.rb
