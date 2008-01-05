@@ -1,35 +1,23 @@
+# $Id$
 
-require 'hoe'
+load 'tasks/setup.rb'
 
-PKG_VERSION = ENV['VERSION'] || '0.0.0'
+ensure_in_path 'lib'
+require 'inifile'
 
-Hoe.new('inifile', PKG_VERSION) do |proj|
-  proj.rubyforge_name = 'codeforpeople.com'
-  proj.author = 'Tim Pease'
-  proj.email = 'tim.pease@gmail.com'
-  proj.url = nil
-  proj.extra_deps = []
-  proj.clean_globs << 'coverage'
-  proj.summary = 'INI file reader and writer'
-  proj.description = <<-DESC
-Although made popular by Windows, INI files can be used on any system thanks
-to their flexibility. They allow a program to store configuration data, which
-can then be easily parsed and changed. Two notable systems that use the INI
-format are Samba and Trac.
+task :default => 'test:run'
 
-This is a native Ruby package for reading and writing INI files.
-  DESC
-  proj.changes = <<-CHANGES
-Version 0.1.0 / 2006-11-26
-  * initial release
-  CHANGES
-end
+PROJ.name = 'inifile'
+PROJ.summary = 'INI file reader and writer'
+PROJ.authors = 'Tim Pease'
+PROJ.email = 'tim.pease@gmail.com'
+PROJ.url = 'http://codeforpeople.rubyforge.org/inifile'
+PROJ.description = paragraphs_of('README.txt', 1).join("\n\n")
+PROJ.changes = paragraphs_of('History.txt', 0..1).join("\n\n")
+PROJ.rubyforge_name = 'codeforpeople'
+PROJ.version = IniFile::VERSION
 
-# --------------------------------------------------------------------------
-desc 'Run rcov on the unit tests'
-task :coverage do
-  opts = "-x turn\\\\.rb\\\\z -T --sort coverage --no-html"
-  sh "rcov -Ilib test/test_inifile.rb #{opts}"
-end
+PROJ.rdoc_remote_dir = PROJ.name
+PROJ.svn = PROJ.name
 
 # EOF

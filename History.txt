@@ -1,0 +1,9 @@
+== 0.2.0 /
+
+* 1 minor enhancement
+  - Using Mr Bones for rake tasks and gem management
+
+== 0.1.0 / 2006-11-26
+
+* 1 major enhancement
+  * Birthday!
