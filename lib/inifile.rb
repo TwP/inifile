@@ -6,6 +6,9 @@
 #
 class IniFile
 
+  # Inifile is enumerable.
+  include Enumerable
+
   # :stopdoc:
   class Error < StandardError; end
   VERSION = '0.2.0'
