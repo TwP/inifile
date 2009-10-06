@@ -95,6 +95,16 @@ class IniFile
 
   #
   # call-seq:
+  #   to_h
+  #
+  # Convert IniFile to hash format.
+  #
+  def to_h
+    @ini.dup
+  end
+
+  #
+  # call-seq:
   #    each {|section, parameter, value| block}
   #
   # Yield each _section_, _parameter_, _value_ in turn to the given
