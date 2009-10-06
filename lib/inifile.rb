@@ -79,6 +79,22 @@ class IniFile
 
   #
   # call-seq:
+  #   to_s
+  #
+  # Convert IniFile to text format.
+  #
+  def to_s
+    s = []
+    @ini.each do |section,hash|
+      s << "[#{section}]"
+      hash.each {|param,val| s << "#{param} #{@param} #{val}"}
+      s << ""
+    end
+    s.join("\n")
+  end
+
+  #
+  # call-seq:
   #    each {|section, parameter, value| block}
   #
   # Yield each _section_, _parameter_, _value_ in turn to the given
