@@ -222,6 +222,16 @@ class IniFile
   end
   alias :== :eql?
 
+  #
+  # call-seq:
+  #   restore
+  #
+  # Restore data from the ini file. If the state of this object has been
+  # changed but not yet saved, this will effectively undo the changes.
+  #
+  def restore
+    parse
+  end
 
   private
   #
