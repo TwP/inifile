@@ -43,7 +43,7 @@ class IniFile
   #
   def initialize( filename, opts = {} )
     @fn = filename
-    @comment = opts[:comment] || ';'
+    @comment = opts[:comment] || ';#'
     @param = opts[:parameter] || '='
     @ini = Hash.new {|h,k| h[k] = Hash.new}
 
