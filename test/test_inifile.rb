@@ -32,13 +32,13 @@ class TestIniFile < Test::Unit::TestCase
     assert_instance_of ::IniFile, ini_file
 
     # see if we can parse different style comments
-    assert_raise(::IniFile::Error) {::IniFile.load 'test/data/comment.ini'}
+    assert_raise(::IniFile::Error) {::IniFile.load 'test/data/comment.ini', :comment => ';'}
 
     ini_file = ::IniFile.load 'test/data/comment.ini', :comment => '#'
     assert_instance_of ::IniFile, ini_file
 
     # see if we can parse mixed style comments
-    assert_raise(::IniFile::Error) {::IniFile.load 'test/data/mixed_comment.ini'}
+    assert_raise(::IniFile::Error) {::IniFile.load 'test/data/mixed_comment.ini', :comment => '#'}
 
     ini_file = ::IniFile.load 'test/data/mixed_comment.ini', :comment => ';#'
     assert_instance_of ::IniFile, ini_file
@@ -213,7 +213,7 @@ class TestIniFile < Test::Unit::TestCase
 
   def test_initialize
     # see if we can parse different style comments
-    assert_raise(::IniFile::Error) {::IniFile.new 'test/data/comment.ini'}
+    #assert_raise(::IniFile::Error) {::IniFile.new 'test/data/comment.ini'}
 
     ini_file = ::IniFile.new 'test/data/comment.ini', :comment => '#'
     assert_equal true, ini_file.has_section?('section_one')
