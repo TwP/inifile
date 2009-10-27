@@ -1,4 +1,4 @@
-== 0.2.0 /
+== 0.2.0 / 2009-10-27
 
 * 1 minor enhancement
   - Using Mr Bones for rake tasks and gem management
