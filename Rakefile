@@ -1,6 +1,17 @@
-# $Id$
+# Look in the tasks/setup.rb file for the various options that can be
+# configured in this Rakefile. The .rake files in the tasks directory
+# are where the options are used.
 
-load 'tasks/setup.rb'
+begin
+  require 'bones'
+  Bones.setup
+rescue LoadError
+  begin
+    load 'tasks/setup.rb'
+  rescue LoadError
+    raise RuntimeError, '### please install the "bones" gem ###'
+  end
+end
 
 ensure_in_path 'lib'
 require 'inifile'
@@ -12,12 +23,13 @@ PROJ.summary = 'INI file reader and writer'
 PROJ.authors = 'Tim Pease'
 PROJ.email = 'tim.pease@gmail.com'
 PROJ.url = 'http://codeforpeople.rubyforge.org/inifile'
-PROJ.description = paragraphs_of('README.txt', 1).join("\n\n")
-PROJ.changes = paragraphs_of('History.txt', 0..1).join("\n\n")
-PROJ.rubyforge_name = 'codeforpeople'
 PROJ.version = IniFile::VERSION
+PROJ.rubyforge.name = 'codeforpeople'
+PROJ.ignore_file = '.gitignore'
+PROJ.rdoc.remote_dir = 'inifile'
 
-PROJ.rdoc_remote_dir = PROJ.name
-PROJ.svn = PROJ.name
+PROJ.ann.email[:server] = 'smtp.gmail.com'
+PROJ.ann.email[:port] = 587
+PROJ.ann.email[:from] = 'Tim Pease'
 
 # EOF
