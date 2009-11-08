@@ -1,5 +1,3 @@
-# $Id$
-
 #
 # This class represents the INI file and can be used to parse, modify,
 # and write INI files.
@@ -11,7 +9,7 @@ class IniFile
 
   # :stopdoc:
   class Error < StandardError; end
-  VERSION = '0.2.0'
+  VERSION = '0.2.1'
   # :startdoc:
 
   #
