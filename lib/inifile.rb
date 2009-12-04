@@ -278,7 +278,7 @@ class IniFile
   # Parse the ini file contents.
   #
   def parse
-    return unless ::Kernel.test ?f, @fn
+    return unless File.file?(@fn)
     section = nil
 
     ::File.open(@fn, 'r') do |f|
