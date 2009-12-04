@@ -287,6 +287,47 @@ class TestIniFile < Test::Unit::TestCase
 
     assert File.read("test/data/tmp.ini") =~ /one = 17/
   end
+
+  def test_can_add_key_to_inifile
+    ini_file = IniFile.new("test/data/tmp.ini")
+    ini_file["new_section"] = {}
+    ini_file.save
+
+    assert File.read("test/data/tmp.ini") =~ /\[new_section\]/
+  end
+
+  def test_adds_correct_key_to_inifile
+    ini_file = IniFile.new("test/data/tmp.ini")
+    ini_file["foo"] = {}
+    ini_file.save
+
+    assert File.read("test/data/tmp.ini") =~ /\[foo\]/
+  end
+
+  def test_assigns_values_to_inifile
+    ini_file = IniFile.new("test/data/tmp.ini")
+    ini_file["foo"] = {
+      :bar => "baz"
+    }
+
+    assert_equal ini_file["foo"], { :bar => "baz" }
+  end
+
+  def test_assigns_correct_values_to_inifile
+    ini_file = IniFile.new("test/data/tmp.ini")
+    ini_file["foo"] = {
+      :one => "two"
+    }
+
+    assert_equal ini_file["foo"], { :one => "two" }
+  end
+
+  def test_assignment_stringifies_key
+    ini_file = IniFile.new("test/data/tmp.ini")
+    ini_file["foo"] = {:one => :two}
+    ini_file[:foo] = {}
+    assert_equal ini_file["foo"], {}
+  end
 end
 
 # EOF

@@ -157,6 +157,16 @@ class IniFile
 
   #
   # call-seq:
+  #    ini_file[section] = hash
+  #
+  # Set the hash of parameter/value pairs for the given _section_.
+  #
+  def []=( section, value )
+    @ini[section.to_s] = value
+  end
+
+  #
+  # call-seq:
   #    has_section?( section )
   #
   # Returns +true+ if the named _section_ exists in the INI file.
