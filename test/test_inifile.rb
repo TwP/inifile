@@ -25,6 +25,13 @@ class TestIniFile < Test::Unit::TestCase
       ['section three', 'six', '6'],
       ['section_five', 'seven and eight', '7 & 8']
     ].sort
+
+    FileUtils.rm_rf "test/data/tmp.ini"
+    FileUtils.cp    "test/data/good.ini", "test/data/tmp.ini"
+  end
+
+  def teardown
+    FileUtils.rm_rf "test/data/tmp.ini"
   end
 
   def test_class_load
@@ -271,6 +278,14 @@ class TestIniFile < Test::Unit::TestCase
     assert_nil ::Kernel.test(?s, tmp)
 
     ::File.delete tmp if ::Kernel.test(?f, tmp)
+  end
+
+  def test_modifies_current_keys
+    ini = IniFile.load("test/data/tmp.ini")
+    ini["section one"]["one"] = 17
+    ini.save
+
+    assert File.read("test/data/tmp.ini") =~ /one = 17/
   end
 end
 
