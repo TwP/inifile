@@ -15,7 +15,7 @@ require 'test/unit' unless defined? $ZENTEST and $ZENTEST
 class TestIniFile < Test::Unit::TestCase
 
   def setup
-    @ini_file = ::IniFile.new 'test/data/good.ini'
+    @ini_file = IniFile.new 'test/data/good.ini'
     @contents = [
       ['section_one', 'one', '1'],
       ['section_one', 'two', '2'],
@@ -35,30 +35,30 @@ class TestIniFile < Test::Unit::TestCase
   end
 
   def test_class_load
-    ini_file = ::IniFile.load 'test/data/good.ini'
-    assert_instance_of ::IniFile, ini_file
+    ini_file = IniFile.load 'test/data/good.ini'
+    assert_instance_of IniFile, ini_file
 
     # see if we can parse different style comments
-    assert_raise(::IniFile::Error) {::IniFile.load 'test/data/comment.ini', :comment => ';'}
+    assert_raise(IniFile::Error) {IniFile.load 'test/data/comment.ini', :comment => ';'}
 
-    ini_file = ::IniFile.load 'test/data/comment.ini', :comment => '#'
-    assert_instance_of ::IniFile, ini_file
+    ini_file = IniFile.load 'test/data/comment.ini', :comment => '#'
+    assert_instance_of IniFile, ini_file
 
     # see if we can parse mixed style comments
-    assert_raise(::IniFile::Error) {::IniFile.load 'test/data/mixed_comment.ini', :comment => '#'}
+    assert_raise(IniFile::Error) {IniFile.load 'test/data/mixed_comment.ini', :comment => '#'}
 
-    ini_file = ::IniFile.load 'test/data/mixed_comment.ini', :comment => ';#'
-    assert_instance_of ::IniFile, ini_file
+    ini_file = IniFile.load 'test/data/mixed_comment.ini', :comment => ';#'
+    assert_instance_of IniFile, ini_file
 
     # see if we can parse different style param separators
-    assert_raise(::IniFile::Error) {::IniFile.load 'test/data/param.ini'}
+    assert_raise(IniFile::Error) {IniFile.load 'test/data/param.ini'}
 
-    ini_file = ::IniFile.load 'test/data/param.ini', :parameter => ':'
-    assert_instance_of ::IniFile, ini_file
+    ini_file = IniFile.load 'test/data/param.ini', :parameter => ':'
+    assert_instance_of IniFile, ini_file
 
     # make sure we error out on files with bad lines
-    assert_raise(::IniFile::Error) {::IniFile.load 'test/data/bad_1.ini'}
-    assert_raise(::IniFile::Error) {::IniFile.load 'test/data/bad_2.ini'}
+    assert_raise(IniFile::Error) {IniFile.load 'test/data/bad_1.ini'}
+    assert_raise(IniFile::Error) {IniFile.load 'test/data/bad_2.ini'}
   end
 
   def test_clone
@@ -130,7 +130,7 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal @contents, ary.sort
 
     ary = []
-    ::IniFile.new('temp.ini').each {|*args| ary << args}
+    IniFile.new('temp.ini').each {|*args| ary << args}
     assert_equal [], ary
   end
 
@@ -146,7 +146,7 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal expected, ary.sort
 
     ary = []
-    ::IniFile.new('temp.ini').each_section {|section| ary << section}
+    IniFile.new('temp.ini').each_section {|section| ary << section}
     assert_equal [], ary
   end
 
@@ -177,7 +177,7 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal true,  @ini_file.has_section?(:section_two)
     assert_equal false, @ini_file.has_section?(nil)
 
-    ini_file = ::IniFile.new 'temp.ini'
+    ini_file = IniFile.new 'temp.ini'
     assert_equal false, ini_file.has_section?('section_one')
     assert_equal false, ini_file.has_section?('one')
     assert_equal false, ini_file.has_section?('two')
@@ -212,7 +212,7 @@ class TestIniFile < Test::Unit::TestCase
     assert_nil @ini_file[nil]
 
     expected = {}
-    ini_file = ::IniFile.new 'temp.ini'
+    ini_file = IniFile.new 'temp.ini'
     assert_equal expected, ini_file['section_one']
     assert_equal expected, ini_file['one']
     assert_nil ini_file[nil]
@@ -220,22 +220,22 @@ class TestIniFile < Test::Unit::TestCase
 
   def test_initialize
     # see if we can parse different style comments
-    #assert_raise(::IniFile::Error) {::IniFile.new 'test/data/comment.ini'}
+    #assert_raise(IniFile::Error) {IniFile.new 'test/data/comment.ini'}
 
-    ini_file = ::IniFile.new 'test/data/comment.ini', :comment => '#'
+    ini_file = IniFile.new 'test/data/comment.ini', :comment => '#'
     assert_equal true, ini_file.has_section?('section_one')
 
     # see if we can parse different style param separators
-    assert_raise(::IniFile::Error) {::IniFile.new 'test/data/param.ini'}
+    assert_raise(IniFile::Error) {IniFile.new 'test/data/param.ini'}
 
-    ini_file = ::IniFile.new 'test/data/param.ini', :parameter => ':'
+    ini_file = IniFile.new 'test/data/param.ini', :parameter => ':'
     assert_equal true, ini_file.has_section?('section_one')
     assert_equal '1', ini_file['section_one']['one']
     assert_equal '2', ini_file['section_one']['two']
 
     # make sure we error out on files with bad lines
-    assert_raise(::IniFile::Error) {::IniFile.new 'test/data/bad_1.ini'}
-    assert_raise(::IniFile::Error) {::IniFile.new 'test/data/bad_2.ini'}
+    assert_raise(IniFile::Error) {IniFile.new 'test/data/bad_1.ini'}
+    assert_raise(IniFile::Error) {IniFile.new 'test/data/bad_2.ini'}
   end
 
   def test_sections
@@ -246,7 +246,7 @@ class TestIniFile < Test::Unit::TestCase
 
     assert_equal expected, @ini_file.sections.sort
 
-    ini_file = ::IniFile.new 'temp.ini'
+    ini_file = IniFile.new 'temp.ini'
     assert_equal [], ini_file.sections
   end
 
@@ -266,18 +266,18 @@ class TestIniFile < Test::Unit::TestCase
 
   def test_write
     tmp = 'test/data/temp.ini'
-    ::File.delete tmp if ::Kernel.test(?f, tmp)
+    File.delete tmp if Kernel.test(?f, tmp)
 
     @ini_file.save tmp
-    assert_equal true, ::Kernel.test(?f, tmp)
+    assert_equal true, Kernel.test(?f, tmp)
 
-    ::File.delete tmp if ::Kernel.test(?f, tmp)
+    File.delete tmp if Kernel.test(?f, tmp)
 
-    ini_file = ::IniFile.new tmp
+    ini_file = IniFile.new tmp
     ini_file.save
-    assert_nil ::Kernel.test(?s, tmp)
+    assert_nil Kernel.test(?s, tmp)
 
-    ::File.delete tmp if ::Kernel.test(?f, tmp)
+    File.delete tmp if Kernel.test(?f, tmp)
   end
 
   def test_modifies_current_keys

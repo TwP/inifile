@@ -64,7 +64,7 @@ class IniFile
   def write( filename = nil )
     @fn = filename unless filename.nil?
 
-    ::File.open(@fn, 'w') do |f|
+    File.open(@fn, 'w') do |f|
       @ini.each do |section,hash|
         f.puts "[#{section}]"
         hash.each {|param,val| f.puts "#{param} #{@param} #{val}"}
@@ -281,7 +281,7 @@ class IniFile
     return unless File.file?(@fn)
     section = nil
 
-    ::File.open(@fn, 'r') do |f|
+    File.open(@fn, 'r') do |f|
       while line = f.gets
         line = line.chomp
 
