@@ -1,3 +1,8 @@
+== 0.3.0 / 2009-12-10
+
+* 1 minor enhancement
+  - Added a []= operator to the inifile for setting entire sections
+
 == 0.2.0 / 2009-10-27
 
 * 1 minor enhancement

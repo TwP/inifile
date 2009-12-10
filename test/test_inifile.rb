@@ -9,6 +9,8 @@ rescue LoadError
   require 'inifile'
 end
 
+require 'fileutils'
+
 begin; require 'turn'; rescue LoadError; end
 require 'test/unit' unless defined? $ZENTEST and $ZENTEST
 
