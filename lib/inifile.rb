@@ -287,10 +287,10 @@ class IniFile
 
         case line
         # ignore blank lines and comment lines
-        when @rgxp_comment: next
+        when @rgxp_comment; next
 
         # this is a section declaration
-        when @rgxp_section: section = @ini[$1.strip]
+        when @rgxp_section; section = @ini[$1.strip]
 
         # otherwise we have a parameter
         when @rgxp_param
