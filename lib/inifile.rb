@@ -49,6 +49,10 @@ class IniFile
     @rgxp_section = %r/\A\s*\[([^\]]+)\]/o
     @rgxp_param   = %r/\A([^#{@param}]+)#{@param}(.*)\z/
 
+    @rgxp_multiline_start = %r/\A(?<param>[^#{@param}]+)#{@param}\s*"(?<value>.*)\z/
+    @rgxp_multiline_value = %r/\A(?<value>[^"]*)\z/
+    @rgxp_multiline_end   = %r/\A(?<value>[^"]*)"\z/
+
     parse
   end
 
@@ -281,27 +285,48 @@ class IniFile
     return unless File.file?(@fn)
     section = nil
 
+    tmp_value = ""
+    tmp_param = ""
+
     File.open(@fn, 'r') do |f|
       while line = f.gets
         line = line.chomp
 
-        case line
+        if line =~ @rgxp_multiline_start then
+
+          tmp_param = $~[:param].strip
+          tmp_value = $~[:value] + "\n"
+          
+       elsif line =~ @rgxp_multiline_value && tmp_param != ""  then
+
+          tmp_value += $~[:value] + "\n"
+
+        elsif line =~ @rgxp_multiline_end && tmp_param != "" then
+
+          section[tmp_param] = tmp_value + $~[:value]
+          tmp_value, tmp_param = ""
+
         # ignore blank lines and comment lines
-        when @rgxp_comment; next
+        elsif line =~ @rgxp_comment then
+
+          next
 
         # this is a section declaration
-        when @rgxp_section; section = @ini[$1.strip]
+        elsif line =~ @rgxp_section then
+
+          section = @ini[$1.strip]
 
         # otherwise we have a parameter
-        when @rgxp_param
-          begin
+        elsif line =~ @rgxp_param then
+
+         begin
             section[$1.strip] = $2.strip
           rescue NoMethodError
             raise Error, "parameter encountered before first section"
           end
 
         else
-          raise Error, "could not parse line '#{line}"
+          raise Error, "could not parse line '#{tmp_param}"
         end
       end  # while
     end  # File.open

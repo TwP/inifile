@@ -6,7 +6,7 @@ begin
   require 'inifile'
 rescue LoadError
   require 'rubygems'
-  require 'inifile'
+  require '/home/melkon/rb/inifile/lib/inifile'
 end
 
 require 'fileutils'
@@ -329,6 +329,20 @@ class TestIniFile < Test::Unit::TestCase
     ini_file["foo"] = {:one => :two}
     ini_file[:foo] = {}
     assert_equal ini_file["foo"], {}
+  end
+
+  def test_multiline_parsing
+    
+    ini_file = IniFile.load('test/data/multiline.ini')
+    
+    multiline = ini_file['section_two']
+    expected = {"four" => "hello\nmultiline"}
+    assert_equal expected, multiline
+
+    multiple = ini_file['section_three']
+    expected = {"three" => "hello\nmultiple\nmultilines"}
+    assert_equal expected, multiple
+
   end
 end
 
