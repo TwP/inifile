@@ -31,6 +31,8 @@ A typical INI file might look like this:
   ; some comment on section1
   var1 = foo
   var2 = doodle
+  var3 = "multiline
+  also possible"
  
   [section2]
 
@@ -38,12 +40,13 @@ A typical INI file might look like this:
   var1 = baz
   var2 = shoodle
 
+
 ==== Format
 
 This describes the elements of the INI file format:
 
 * *Sections*: Section declarations start with '[' and end with ']' as in [section1] and [section2] above. And sections start with section declarations.
-* *Parameters*: The "var1 = foo" above is an example of a parameter (also known as an item). Parameters are made up of a key ('var1'), equals sign ('='), and a value ('foo').
+* *Parameters*: The "var1 = foo" above is an example of a parameter (also known as an item). Parameters are made up of a key ('var1'), equals sign ('='), and a value ('foo'). Multiline is support if value of parameter is enclosed by ".
 * *Comments*: All the lines starting with a ';' are assumed to be comments, and are ignored.
 
 ==== Differences
@@ -64,7 +67,7 @@ This package supports the standard INI file format described in the *Format*
 section above. The following differences are also supported:
 
 * *Comments*: The comment character can be specified when an +IniFile+ is created. The comment character must be the first non-whitespace character on a line.
-* *Backslashes*: Backslashes are not supported by this package.
+* *Backslashes*: Backslashes are not supported by this package. But multilines are. Enclose the param's value by ".
 * <b>Duplicate parameters</b>: Duplicate parameters are allowed in a single section. The last parameter value is the one that will be stored in the +IniFile+.
 * <b>Duplicate sections</b>: Duplicate sections will be merged. Parameters duplicated between to the two sections follow the duplicate parameters rule above.
 * *Parameters*: The parameter separator character can be specified when an +IniFile+ is created.

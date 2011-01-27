@@ -47,11 +47,11 @@ class IniFile
 
     @rgxp_comment = %r/\A\s*\z|\A\s*[#{@comment}]/
     @rgxp_section = %r/\A\s*\[([^\]]+)\]/o
-    @rgxp_param   = %r/\A([^#{@param}]+)#{@param}(.*)\z/
+    @rgxp_param   = %r/\A([^#{@param}]+)#{@param}\s*"?([^"]*)"?\z/
 
-    @rgxp_multiline_start = %r/\A(?<param>[^#{@param}]+)#{@param}\s*?"+(?<value>.*)\z/
-    @rgxp_multiline_value = %r/\A(?<value>.*[^"])\z/
-    @rgxp_multiline_end   = %r/\A(?<value>.*)"\z/
+    @rgxp_multiline_start = %r/\A(?<param>[^#{@param}]+)#{@param}\s*"+(?<value>[^"]*)?\z/
+    @rgxp_multiline_value = %r/\A(?<value>[^"]*)\z/
+    @rgxp_multiline_end   = %r/\A(?<value>[^"]*)"\z/
 
     parse
   end
