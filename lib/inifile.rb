@@ -292,16 +292,23 @@ class IniFile
       while line = f.gets
         line = line.chomp
 
+        # mutline start
+        # create tmp variables to indicate that a multine has started
+        # and the next lines of the ini file will be checked
+        # against the other mutline rgxps.
         if line =~ @rgxp_multiline_start then
 
           tmp_param = $~[:param].strip
           tmp_value = $~[:value] + "\n"
           
+        # the mutline end-delimiter is found
+        # clear the tmp vars and add the param / value pair to the section
         elsif line =~ @rgxp_multiline_end && tmp_param != "" then
 
           section[tmp_param] = tmp_value + $~[:value]
           tmp_value, tmp_param = "", ""
 
+        # anything else between multiline start and end
         elsif line =~ @rgxp_multiline_value && tmp_param != ""  then
 
           tmp_value += $~[:value] + "\n"
@@ -326,7 +333,7 @@ class IniFile
           end
 
         else
-          raise Error, "could not parse line '#{tmp_param}"
+          raise Error, "could not parse line '#{line}"
         end
       end  # while
     end  # File.open

@@ -22,6 +22,7 @@ class TestIniFile < Test::Unit::TestCase
       ['section_one', 'one', '1'],
       ['section_one', 'two', '2'],
       ['section_two', 'three', '3'],
+      ['section_two', 'multi', "multiline\nsupport"],
       ['section three', 'four', '4'],
       ['section three', 'five', '5'],
       ['section three', 'six', '6'],
@@ -135,7 +136,7 @@ class TestIniFile < Test::Unit::TestCase
     IniFile.new('temp.ini').each {|*args| ary << args}
     assert_equal [], ary
   end
-
+  
   def test_each_section
     expected = [
       'section_one', 'section_two', 'section three',
@@ -192,7 +193,7 @@ class TestIniFile < Test::Unit::TestCase
     }
     assert_equal expected, @ini_file[:section_one]
 
-    expected = {'three' => '3'}
+    expected = {'three' => '3', 'multi' => "multiline\nsupport"}
     assert_equal expected, @ini_file['section_two']
 
     expected = {
