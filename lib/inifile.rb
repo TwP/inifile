@@ -284,6 +284,9 @@ class IniFile
     File.open(@fn, 'r') do |f|
       while line = f.gets
         line = line.chomp
+        if RUBY_VERSION >= '1.9'
+          line.encode!('UTF-8','ISO-8859-1')
+        end
 
         case line
         # ignore blank lines and comment lines

@@ -330,6 +330,11 @@ class TestIniFile < Test::Unit::TestCase
     ini_file[:foo] = {}
     assert_equal ini_file["foo"], {}
   end
+
+  def test_parse_browscap
+    ini_file = IniFile.new("test/data/browscap.ini")
+  end
+
 end
 
 # EOF
