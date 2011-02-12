@@ -49,9 +49,9 @@ class IniFile
     @rgxp_section = %r/\A\s*\[([^\]]+)\]/o
     @rgxp_param   = %r/\A([^#{@param}]+)#{@param}\s*"?([^"]*)"?\z/
 
-    @rgxp_multiline_start = %r/\A(?<param>[^#{@param}]+)#{@param}\s*"+(?<value>[^"]*)?\z/
-    @rgxp_multiline_value = %r/\A(?<value>[^"]*)\z/
-    @rgxp_multiline_end   = %r/\A(?<value>[^"]*)"\z/
+    @rgxp_multiline_start = %r/\A([^#{@param}]+)#{@param}\s*"+([^"]*)?\z/
+    @rgxp_multiline_value = %r/\A([^"]*)\z/
+    @rgxp_multiline_end   = %r/\A([^"]*)"\z/
 
     parse
   end
@@ -298,20 +298,20 @@ class IniFile
         # against the other mutline rgxps.
         if line =~ @rgxp_multiline_start then
 
-          tmp_param = $~[:param].strip
-          tmp_value = $~[:value] + "\n"
-          
+          tmp_param = $1.strip
+          tmp_value = $2 + "\n"
+
         # the mutline end-delimiter is found
         # clear the tmp vars and add the param / value pair to the section
         elsif line =~ @rgxp_multiline_end && tmp_param != "" then
 
-          section[tmp_param] = tmp_value + $~[:value]
+          section[tmp_param] = tmp_value + $1
           tmp_value, tmp_param = "", ""
 
         # anything else between multiline start and end
         elsif line =~ @rgxp_multiline_value && tmp_param != ""  then
 
-          tmp_value += $~[:value] + "\n"
+          tmp_value += $1 + "\n"
 
         # ignore blank lines and comment lines
         elsif line =~ @rgxp_comment then
