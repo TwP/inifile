@@ -284,69 +284,66 @@ class IniFile
   #
   def parse
     return unless File.file?(@fn)
+
     section = nil
-
-    opts = {}
-    if RUBY_VERSION >= '1.9' && @encoding
-      opts[:encoding] = @encoding
-    end
-
     tmp_value = ""
     tmp_param = ""
 
-    File.open(@fn, 'r', opts) do |f|
-    File.open(@fn, 'r') do |f|
-      while line = f.gets
-        line = line.chomp
+    fd = (RUBY_VERSION >= '1.9' && @encoding) ?
+         File.open(@fn, 'r', :encoding => @encoding) :
+         File.open(@fn, 'r')
 
-        # mutline start
-        # create tmp variables to indicate that a multine has started
-        # and the next lines of the ini file will be checked
-        # against the other mutline rgxps.
-        if line =~ @rgxp_multiline_start then
+    while line = fd.gets
+      line = line.chomp
 
-          tmp_param = $1.strip
-          tmp_value = $2 + "\n"
+      # mutline start
+      # create tmp variables to indicate that a multine has started
+      # and the next lines of the ini file will be checked
+      # against the other mutline rgxps.
+      if line =~ @rgxp_multiline_start then
 
-        # the mutline end-delimiter is found
-        # clear the tmp vars and add the param / value pair to the section
-        elsif line =~ @rgxp_multiline_end && tmp_param != "" then
+        tmp_param = $1.strip
+        tmp_value = $2 + "\n"
 
-          section[tmp_param] = tmp_value + $1
-          tmp_value, tmp_param = "", ""
+      # the mutline end-delimiter is found
+      # clear the tmp vars and add the param / value pair to the section
+      elsif line =~ @rgxp_multiline_end && tmp_param != "" then
 
-        # anything else between multiline start and end
-        elsif line =~ @rgxp_multiline_value && tmp_param != ""  then
+        section[tmp_param] = tmp_value + $1
+        tmp_value, tmp_param = "", ""
 
-          tmp_value += $1 + "\n"
+      # anything else between multiline start and end
+      elsif line =~ @rgxp_multiline_value && tmp_param != ""  then
 
-        # ignore blank lines and comment lines
-        elsif line =~ @rgxp_comment then
+        tmp_value += $1 + "\n"
 
-          next
+      # ignore blank lines and comment lines
+      elsif line =~ @rgxp_comment then
 
-        # this is a section declaration
-        elsif line =~ @rgxp_section then
+        next
 
-          section = @ini[$1.strip]
+      # this is a section declaration
+      elsif line =~ @rgxp_section then
 
-        # otherwise we have a parameter
-        elsif line =~ @rgxp_param then
+        section = @ini[$1.strip]
 
-          begin
-            section[$1.strip] = $2.strip
-          rescue NoMethodError
-            raise Error, "parameter encountered before first section"
-          end
+      # otherwise we have a parameter
+      elsif line =~ @rgxp_param then
 
-        else
-          raise Error, "could not parse line '#{line}"
+        begin
+          section[$1.strip] = $2.strip
+        rescue NoMethodError
+          raise Error, "parameter encountered before first section"
         end
-      end  # while
-    end  # File.open
 
+      else
+        raise Error, "could not parse line '#{line}"
+      end
+    end  # while
+
+  ensure
+    fd.close if defined? fd and fd
   end
 
-end  # class IniFile
+end  # IniFile
 
-# EOF

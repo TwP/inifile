@@ -345,9 +345,11 @@ class TestIniFile < Test::Unit::TestCase
 
   end
 
-  def test_parse_encoding
-    ini_file = IniFile.new("test/data/browscap.ini", :encoding => 'ISO-8859-1')
-    assert_equal ini_file['www.substancia.com AutoHTTPAgent (ver *)']['Browser'], "Subst\xE2ncia".force_encoding('ISO-8859-1')
+  if RUBY_VERSION >= '1.9'
+    def test_parse_encoding
+      ini_file = IniFile.new("test/data/browscap.ini", :encoding => 'ISO-8859-1')
+      assert_equal ini_file['www.substancia.com AutoHTTPAgent (ver *)']['Browser'], "Subst\xE2ncia".force_encoding('ISO-8859-1')
+    end
   end
 
 end
