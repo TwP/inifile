@@ -136,7 +136,7 @@ class TestIniFile < Test::Unit::TestCase
     IniFile.new('temp.ini').each {|*args| ary << args}
     assert_equal [], ary
   end
-  
+
   def test_each_section
     expected = [
       'section_one', 'section_two', 'section three',
@@ -333,9 +333,8 @@ class TestIniFile < Test::Unit::TestCase
   end
 
   def test_multiline_parsing
-    
     ini_file = IniFile.load('test/data/multiline.ini')
-    
+
     multiline = ini_file['section_three']
     expected = {"three" => "hello\nmultiline", "other" => "stuff"}
     assert_equal expected, multiline
@@ -345,6 +344,11 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal expected, multiple
 
   end
+
+  def test_parse_encoding
+    ini_file = IniFile.new("test/data/browscap.ini", :encoding => 'ISO-8859-1')
+    assert_equal ini_file['www.substancia.com AutoHTTPAgent (ver *)']['Browser'], "Subst\xE2ncia".force_encoding('ISO-8859-1')
+  end
+
 end
 
-# EOF

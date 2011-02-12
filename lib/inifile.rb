@@ -43,6 +43,7 @@ class IniFile
     @fn = filename
     @comment = opts[:comment] || ';#'
     @param = opts[:parameter] || '='
+    @encoding = opts[:encoding]
     @ini = Hash.new {|h,k| h[k] = Hash.new}
 
     @rgxp_comment = %r/\A\s*\z|\A\s*[#{@comment}]/
@@ -285,9 +286,15 @@ class IniFile
     return unless File.file?(@fn)
     section = nil
 
+    opts = {}
+    if RUBY_VERSION >= '1.9' && @encoding
+      opts[:encoding] = @encoding
+    end
+
     tmp_value = ""
     tmp_param = ""
 
+    File.open(@fn, 'r', opts) do |f|
     File.open(@fn, 'r') do |f|
       while line = f.gets
         line = line.chomp
