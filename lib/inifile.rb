@@ -77,8 +77,10 @@ class IniFile
     @fn = filename unless filename.nil?
 
     encoding = opts[:encoding] || @encoding
-    mode = encoding ? "w:#{encoding.to_s}" : 'w'
-
+    mode = (RUBY_VERSION >= '1.9' && @encoding) ?
+         "w:#{encoding.to_s}" :
+         "w"
+    
     File.open(@fn, mode) do |f|
       @ini.each do |section,hash|
         f.puts "[#{section}]"
