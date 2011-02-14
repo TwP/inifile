@@ -2,6 +2,9 @@
 # This class represents the INI file and can be used to parse, modify,
 # and write INI files.
 #
+
+#encoding: UTF-8
+
 class IniFile
 
   # Inifile is enumerable.
@@ -38,6 +41,7 @@ class IniFile
   #
   #    :comment => ';'      The line comment character(s)
   #    :parameter => '='    The parameter / value separator
+  #    :encoding => nil    The encoding used for read/write (RUBY 1.9)
   #
   def initialize( filename, opts = {} )
     @fn = filename
@@ -65,11 +69,17 @@ class IniFile
   # Write the INI file contents to the filesystem. The given _filename_
   # will be used to write the file. If _filename_ is not given, then the
   # named used when constructing this object will be used.
+  # The following _options_ can be passed to this method:
   #
-  def write( filename = nil )
+  #    :encoding => ';'      The encoding used for writing (RUBY 1.9)
+  #
+  def write( filename = nil, opts={} )
     @fn = filename unless filename.nil?
 
-    File.open(@fn, 'w') do |f|
+    encoding = opts[:encoding] || @encoding
+    mode = encoding ? "w:#{encoding.to_s}" : 'w'
+
+    File.open(@fn, mode) do |f|
       @ini.each do |section,hash|
         f.puts "[#{section}]"
         hash.each {|param,val| f.puts "#{param} #{@param} #{val}"}

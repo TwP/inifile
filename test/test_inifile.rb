@@ -2,6 +2,8 @@
 #                 classname: asrt / meth =  ratio%
 #             Rini::IniFile:    0 /    9 =   0.00%
 
+# encoding: UTF-8
+
 begin
   require 'inifile'
 rescue LoadError
@@ -349,6 +351,23 @@ class TestIniFile < Test::Unit::TestCase
     def test_parse_encoding
       ini_file = IniFile.new("test/data/browscap.ini", :encoding => 'ISO-8859-1')
       assert_equal ini_file['www.substancia.com AutoHTTPAgent (ver *)']['Browser'], "Subst\xE2ncia".force_encoding('ISO-8859-1')
+    end
+  end
+
+  if RUBY_VERSION >= '1.9'
+    def test_write_encoding
+
+      tmp = 'test/data/tmp.ini'
+      File.delete tmp if Kernel.test(?f, tmp)
+
+      @ini_file = IniFile.new(tmp, :encoding => 'UTF-8')
+      @ini_file['testutf-8'] = {"utf-8" => "appr\u20accier"}
+
+      @ini_file.save tmp
+
+      test = File.open(tmp)
+      assert_equal test.external_encoding.to_s, 'UTF-8'
+
     end
   end
 
