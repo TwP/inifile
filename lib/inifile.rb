@@ -41,7 +41,7 @@ class IniFile
   #
   #    :comment => ';'      The line comment character(s)
   #    :parameter => '='    The parameter / value separator
-  #    :encoding => nil    The encoding used for read/write (RUBY 1.9)
+  #    :encoding => nil     The encoding used for read/write (RUBY 1.9)
   #
   def initialize( filename, opts = {} )
     @fn = filename
@@ -71,7 +71,7 @@ class IniFile
   # named used when constructing this object will be used.
   # The following _options_ can be passed to this method:
   #
-  #    :encoding => ';'      The encoding used for writing (RUBY 1.9)
+  #    :encoding => nil     The encoding used for writing (RUBY 1.9)
   #
   def write( filename = nil, opts={} )
     @fn = filename unless filename.nil?
@@ -79,8 +79,8 @@ class IniFile
     encoding = opts[:encoding] || @encoding
     mode = (RUBY_VERSION >= '1.9' && @encoding) ?
          "w:#{encoding.to_s}" :
-         "w"
-    
+         'w'
+
     File.open(@fn, mode) do |f|
       @ini.each do |section,hash|
         f.puts "[#{section}]"

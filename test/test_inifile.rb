@@ -352,11 +352,8 @@ class TestIniFile < Test::Unit::TestCase
       ini_file = IniFile.new("test/data/browscap.ini", :encoding => 'ISO-8859-1')
       assert_equal ini_file['www.substancia.com AutoHTTPAgent (ver *)']['Browser'], "Subst\xE2ncia".force_encoding('ISO-8859-1')
     end
-  end
 
-  if RUBY_VERSION >= '1.9'
     def test_write_encoding
-
       tmp = 'test/data/tmp.ini'
       File.delete tmp if Kernel.test(?f, tmp)
 
@@ -367,7 +364,6 @@ class TestIniFile < Test::Unit::TestCase
 
       test = File.open(tmp)
       assert_equal test.external_encoding.to_s, 'UTF-8'
-
     end
   end
 
