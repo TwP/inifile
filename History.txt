@@ -1,4 +1,9 @@
-== 0.4.0 / 2011-02-
+== 0.4.1 / 2011-02-22
+
+Bug Fixes
+  - Empty quotes [Steffen Beyer]
+
+== 0.4.0 / 2011-02-15
 
 Enhancements
   - Added multiline support [André Gawron]
