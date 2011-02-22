@@ -345,6 +345,9 @@ class TestIniFile < Test::Unit::TestCase
     expected = {"four" => "hello\nmultiple\nmultilines"}
     assert_equal expected, multiple
 
+    multiple = ini_file['empty_lines']
+    expected = {'empty' => '', 'not_empty' => 'full'}
+
   end
 
   if RUBY_VERSION >= '1.9'
