@@ -54,7 +54,7 @@ class IniFile
     @rgxp_section = %r/\A\s*\[([^\]]+)\]/o
     @rgxp_param   = %r/\A([^#{@param}]+)#{@param}\s*"?([^"]*)"?\z/
 
-    @rgxp_multiline_start = %r/\A([^#{@param}]+)#{@param}\s*"+([^"]*)?\z/
+    @rgxp_multiline_start = %r/\A([^#{@param}]+)#{@param}\s*"([^"]*)?\z/
     @rgxp_multiline_value = %r/\A([^"]*)\z/
     @rgxp_multiline_end   = %r/\A([^"]*)"\z/
 
