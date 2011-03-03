@@ -120,6 +120,33 @@ class IniFile
 
   #
   # call-seq:
+  #   merge(other_inifile)
+  #
+  # Merges other_inifile into this inifile, overwriting existing entries.
+  # Useful for having a system inifile with user rideable settings elsewhere. 
+  #
+  def merge(other_inifile)
+    ini = @ini.dup
+    each_section do |section|
+      ini[section].merge!(other_inifile[section])
+      other_inifile.delete_section(section)
+    end
+    ini.merge(other_inifile.to_h)
+  end
+
+  #
+  # call-seq:
+  #   merge!(other_inifile)
+  #
+  # Merges other_inifile into this inifile, overwriting existing entries.
+  # Useful for having a system inifile with user rideable settings elsewhere. 
+  #  
+  def merge!(other_inifile)
+    @ini = merge(other_inifile).to_h
+  end
+
+  #
+  # call-seq:
   #    each {|section, parameter, value| block}
   #
   # Yield each _section_, _parameter_, _value_ in turn to the given
