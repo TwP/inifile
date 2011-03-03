@@ -4,9 +4,6 @@
 
 # encoding: UTF-8
 
-# Add this libdir to loadpath
-#$:.push File.expand_path("../../lib", __FILE__)
-
 begin
   require 'inifile'
 rescue LoadError
