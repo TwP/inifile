@@ -25,6 +25,8 @@ class IniFile
   #
   #    :comment => ';'      The line comment character(s)
   #    :parameter => '='    The parameter / value separator
+  #    :default => nil      The default section name if there is no section
+  #    :liberal => false    Allow paramater values which don't start with quotes but have quotes in them
   #
   def self.load( filename, opts = {} )
     new(filename, opts)
@@ -47,12 +49,15 @@ class IniFile
     @fn = filename
     @comment = opts[:comment] || ';#'
     @param = opts[:parameter] || '='
+    @default = opts[:default]
+    @liberal = opts[:liberal]
     @encoding = opts[:encoding]
     @ini = Hash.new {|h,k| h[k] = Hash.new}
 
     @rgxp_comment = %r/\A\s*\z|\A\s*[#{@comment}]/
     @rgxp_section = %r/\A\s*\[([^\]]+)\]/o
     @rgxp_param   = %r/\A([^#{@param}]+)#{@param}\s*"?([^"]*)"?\z/
+    @rgxp_noquote_param   = %r/\A([^#{@param}]+)#{@param}\s*(.*)\z/
 
     @rgxp_multiline_start = %r/\A([^#{@param}]+)#{@param}\s*"([^"]*)?\z/
     @rgxp_multiline_value = %r/\A([^"]*)\z/
@@ -343,6 +348,20 @@ class IniFile
       elsif line =~ @rgxp_param then
 
         begin
+          if section == nil and @default != nil then
+            section = @ini[@default]
+          end
+          section[$1.strip] = $2.strip
+        rescue NoMethodError
+          raise Error, "parameter encountered before first section"
+        end
+
+      # we're allowing liberal param values maybe we have that style of param
+      elsif @liberal and line =~ @rgxp_noquote_param then
+        begin
+          if section == nil and @default != nil then
+            section = @ini[@default]
+          end
           section[$1.strip] = $2.strip
         rescue NoMethodError
           raise Error, "parameter encountered before first section"
