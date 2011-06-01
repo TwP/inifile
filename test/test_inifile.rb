@@ -349,6 +349,16 @@ class TestIniFile < Test::Unit::TestCase
     expected = {'empty' => '', 'not_empty' => 'full'}
 
   end
+  
+  def test_merge
+    ini_file = @ini_file.merge(IniFile.load("test/data/merge.ini"))
+    assert_equal '3', ini_file['section_one']['one']
+    assert_equal '2', ini_file['section_one']['two']
+    # Make sure that the rest haven't changed
+    assert_equal '3', ini_file['section_two']['three']
+    # And that we got any additional sections too
+    assert_equal '5', ini_file['section_five']['five']
+  end
 
   if RUBY_VERSION >= '1.9'
     def test_parse_encoding
