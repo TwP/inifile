@@ -120,29 +120,39 @@ class IniFile
 
   #
   # call-seq:
-  #   merge(other_inifile)
+  #   merge( other_inifile )
   #
-  # Merges other_inifile into this inifile, overwriting existing entries.
-  # Useful for having a system inifile with user rideable settings elsewhere. 
+  # Returns a copy of this inifile with the entries from the other_inifile
+  # merged into the copy.
   #
-  def merge(other_inifile)
-    ini = @ini.dup
-    each_section do |section|
-      ini[section].merge!(other_inifile[section])
-      other_inifile.delete_section(section)
-    end
-    ini.merge(other_inifile.to_h)
+  def merge( other )
+    self.dup.merge!(other)
   end
 
   #
   # call-seq:
-  #   merge!(other_inifile)
+  #   merge!( other_inifile )
   #
   # Merges other_inifile into this inifile, overwriting existing entries.
-  # Useful for having a system inifile with user rideable settings elsewhere. 
-  #  
-  def merge!(other_inifile)
-    @ini = merge(other_inifile).to_h
+  # Useful for having a system inifile with user overrideable settings elsewhere.
+  #
+  def merge!( other )
+    my_keys = @ini.keys
+    other_keys =
+        case other
+        when IniFile; other.instance_variable_get(:@ini).keys
+        when Hash; other.keys
+        else raise "cannot merge contents from '#{other.class.name}'" end
+
+    (my_keys & other_keys).each do |key|
+      @ini[key].merge!(other[key])
+    end
+
+    (other_keys - my_keys).each do |key|
+      @ini[key] = other[key]
+    end
+
+    self
   end
 
   #
