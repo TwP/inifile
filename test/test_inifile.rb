@@ -365,6 +365,24 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal '1', @ini_file['section_one']['one']
   end
 
+  def test_merge_hash
+    ini_file = @ini_file.merge({
+      'section_one'  => { 'one'  => '3' },
+      'section_five' => { 'five' => '5' }
+    })
+    assert_equal '3', ini_file['section_one']['one']
+    assert_equal '2', ini_file['section_one']['two']
+
+    # make sure that the rest haven't changed
+    assert_equal '3', ini_file['section_two']['three']
+
+    # and that we got any additional sections too
+    assert_equal '5', ini_file['section_five']['five']
+
+    # original object is unchanged
+    assert_equal '1', @ini_file['section_one']['one']
+  end
+
   if RUBY_VERSION >= '1.9'
     def test_parse_encoding
       ini_file = IniFile.new("test/data/browscap.ini", :encoding => 'ISO-8859-1')
