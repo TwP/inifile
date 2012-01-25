@@ -20,13 +20,14 @@ class IniFile
   #    IniFile.load( filename )
   #    IniFile.load( filename, options )
   #
-  # Open the given _filename_ and load the contetns of the INI file.
+  # Open the given _filename_ and load the contents of the INI file.
   # The following _options_ can be passed to this method:
   #
   #    :comment => ';'      The line comment character(s)
   #    :parameter => '='    The parameter / value separator
   #    :default => nil      The default section name if there is no section
   #    :liberal => false    Allow paramater values which don't start with quotes but have quotes in them
+  #    :requote => false    Requote parameter values after parsing
   #
   def self.load( filename, opts = {} )
     new(filename, opts)
@@ -51,6 +52,7 @@ class IniFile
     @param = opts[:parameter] || '='
     @default = opts[:default]
     @liberal = opts[:liberal]
+    @requote = opts[:requote]
     @encoding = opts[:encoding]
     @ini = Hash.new {|h,k| h[k] = Hash.new}
 
@@ -314,19 +316,23 @@ class IniFile
       line = line.chomp
 
       # mutline start
-      # create tmp variables to indicate that a multine has started
+      # create tmp variables to indicate that a multiline has started
       # and the next lines of the ini file will be checked
-      # against the other mutline rgxps.
+      # against the other multiline rgxps.
       if line =~ @rgxp_multiline_start then
 
         tmp_param = $1.strip
         tmp_value = $2 + "\n"
 
-      # the mutline end-delimiter is found
+      # the multiline end-delimiter is found
       # clear the tmp vars and add the param / value pair to the section
       elsif line =~ @rgxp_multiline_end && tmp_param != "" then
 
-        section[tmp_param] = tmp_value + $1
+        if @requote then
+          section[tmp_param] = '"' + tmp_value + $1 + '"'
+        else
+          section[tmp_param] = tmp_value + $1
+        end
         tmp_value, tmp_param = "", ""
 
       # anything else between multiline start and end
@@ -351,7 +357,11 @@ class IniFile
           if section == nil and @default != nil then
             section = @ini[@default]
           end
-          section[$1.strip] = $2.strip
+          if @requote
+            section[$1.strip] = '"' + $2.strip + '"'
+          else
+            section[$1.strip] = $2.strip
+          end
         rescue NoMethodError
           raise Error, "parameter encountered before first section"
         end
