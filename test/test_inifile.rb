@@ -4,17 +4,11 @@
 
 # encoding: UTF-8
 
-begin
-  require 'inifile'
-rescue LoadError
-  require 'rubygems'
-  require 'inifile'
-end
-
+libpath = File.expand_path '../../lib', __FILE__
+require File.join(libpath, 'inifile')
 require 'fileutils'
+require 'test/unit'
 
-begin; require 'turn'; rescue LoadError; end
-require 'test/unit' unless defined? $ZENTEST and $ZENTEST
 
 class TestIniFile < Test::Unit::TestCase
 
@@ -358,7 +352,7 @@ class TestIniFile < Test::Unit::TestCase
     ini_file = IniFile.load('test/data/multiline.ini')
 
     multiline = ini_file['section_three']
-    expected = {"three" => "hello\nmultiline", "other" => "stuff"}
+    expected = {"three" => "hello\nmultiline", "other" => '"stuff"'}
     assert_equal expected, multiline
 
     multiple = ini_file['section_four']
@@ -367,7 +361,7 @@ class TestIniFile < Test::Unit::TestCase
 
     multiple = ini_file['empty_lines']
     expected = {'empty' => '', 'not_empty' => 'full'}
-
+    assert_equal expected, multiple
   end
 
   def test_merge

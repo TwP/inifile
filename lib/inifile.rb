@@ -25,6 +25,7 @@ class IniFile
   #
   #    :comment => ';'      The line comment character(s)
   #    :parameter => '='    The parameter / value separator
+  #    :encoding => nil     The encoding used for read/write (RUBY 1.9)
   #
   def self.load( filename, opts = {} )
     new(filename, opts)
@@ -48,16 +49,11 @@ class IniFile
     @comment = opts.fetch(:comment, ';#')
     @param = opts.fetch(:parameter, '=')
     @encoding = opts.fetch(:encoding, nil)
-
     @ini = Hash.new {|h,k| h[k] = Hash.new}
 
     @rgxp_comment = %r/\A\s*\z|\A\s*[#{@comment}]/
-    @rgxp_section = %r/\A\s*\[([^\]]+)\]/o
-    @rgxp_param   = %r/\A([^#{@param}]+)#{@param}\s*"?([^"]*)"?\z/
-
-    @rgxp_multiline_start = %r/\A([^#{@param}]+)#{@param}\s*"([^"]*)?\z/
-    @rgxp_multiline_value = %r/\A([^"]*)\z/
-    @rgxp_multiline_end   = %r/\A([^"]*)"\z/
+    @rgxp_section = %r/\A\s*\[([^\]]+)\]/
+    @rgxp_param   = %r/[^\\]#{@param}/
 
     parse
   end
@@ -85,7 +81,7 @@ class IniFile
     File.open(@fn, mode) do |f|
       @ini.each do |section,hash|
         f.puts "[#{section}]"
-        hash.each {|param,val| f.puts "#{param} #{@param} #{val}"}
+        hash.each {|param,val| f.puts "#{param} #{@param} #{escape val}"}
         f.puts
       end
     end
@@ -103,7 +99,7 @@ class IniFile
     s = []
     @ini.each do |section,hash|
       s << "[#{section}]"
-      hash.each {|param,val| s << "#{param} #{@param} #{val}"}
+      hash.each {|param,val| s << "#{param} #{@param} #{escape val}"}
       s << ""
     end
     s.join("\n")
@@ -337,18 +333,15 @@ class IniFile
   end
 
 private
-  #
-  # call-seq
-  #    parse
-  #
+
   # Parse the ini file contents.
   #
   def parse
     return unless File.file?(@fn)
 
-    section = nil
-    tmp_value = ""
-    tmp_param = ""
+    @_current_section = nil
+    @_current_param = nil
+    @_current_value = nil
 
     fd = (RUBY_VERSION >= '1.9' && @encoding) ?
          File.open(@fn, 'r', :encoding => @encoding) :
@@ -357,53 +350,100 @@ private
     while line = fd.gets
       line = line.chomp
 
-      # multi-line start
-      # create tmp variables to indicate that a multi-line has started
-      # and the next lines of the ini file will be checked
-      # against the other multi-line rgxps.
-      if line =~ @rgxp_multiline_start then
-
-        tmp_param = $1.strip
-        tmp_value = $2 + "\n"
-
-      # the multi-line end-delimiter is found
-      # clear the tmp vars and add the param / value pair to the section
-      elsif line =~ @rgxp_multiline_end && tmp_param != "" then
-
-        section[tmp_param] = tmp_value + $1
-        tmp_value, tmp_param = "", ""
-
-      # anything else between multi-line start and end
-      elsif line =~ @rgxp_multiline_value && tmp_param != ""  then
-
-        tmp_value += $1 + "\n"
-
-      # ignore blank lines and comment lines
-      elsif line =~ @rgxp_comment then
-
+      # we ignore comment lines and blank lines
+      if line =~ @rgxp_comment
+        finish_param_and_value
         next
-
-      # this is a section declaration
-      elsif line =~ @rgxp_section then
-
-        section = @ini[$1.strip]
-
-      # otherwise we have a parameter
-      elsif line =~ @rgxp_param then
-
-        begin
-          section[$1.strip] = $2.strip
-        rescue NoMethodError
-          raise Error, "parameter encountered before first section"
-        end
-
-      else
-        raise Error, "could not parse line '#{line}"
       end
+
+      # place values in the current section
+      if line =~ @rgxp_section
+        finish_param_and_value
+        @_current_section = @ini[$1.strip]
+        next
+      end
+
+      parse_param_and_value line
+
     end  # while
 
+    finish_param_and_value
   ensure
     fd.close if defined? fd and fd
+    @_current_section = nil
+    @_current_param = nil
+    @_current_value = nil
+  end
+
+  # Attempt to parse a param and value from the given _line_. This method
+  # takes into account multi-line values.
+  #
+  def parse_param_and_value( line )
+    p = v = nil
+    split = line =~ @rgxp_param
+
+    if split
+      p = line.slice(0, split+1).strip
+      v = line.slice(split+2, line.length).strip
+    else
+      v = line
+    end
+
+    if p.nil? and @_current_param.nil?
+      raise Error, "could not parse line '#{line}'"
+    end
+
+    @_current_param = p unless p.nil?
+
+    if @_current_value then @_current_value << v
+    else @_current_value = v end
+
+    if @_current_value =~ %r/\\\z/ then @_current_value << 'n'
+    else finish_param_and_value end
+  end
+
+  # If there is a current param being parsed, finish this parse step by
+  # storing the param and value in the current section and resetting for the
+  # next parse step.
+  #
+  def finish_param_and_value
+    return unless @_current_param
+
+    raise Error, "parameter encountered before first section" if @_current_section.nil?
+    @_current_section[@_current_param] = unescape @_current_value
+
+    @_current_param = nil
+    @_current_value = nil
+  end
+
+  # Unescape special characters found in the value string. This will convert
+  # escaped null, tab, carriage return, newline, and backslash into their
+  # literal equivalents.
+  #
+  def unescape( value )
+    value = value.to_s
+    value.gsub!(%r/\\[0trn\\]/) { |char|
+      case char
+      when '\0';   "\0"
+      when '\t';   "\t"
+      when '\r';   "\r"
+      when '\n';   "\n"
+      when "\\\\"; "\\"
+      end
+    }
+    value
+  end
+
+  # Escape special characters
+  #
+  def escape( value )
+    value = value.to_s.dup
+    value.gsub!(%r/\\/, "\\\\")
+    value.gsub!(%r/\n/, "\\n")
+    value.gsub!(%r/\r/, "\\r")
+    value.gsub!(%r/\t/, "\\t")
+    value.gsub!(%r/\0/, "\\0")
+    value
   end
 
 end  # IniFile
