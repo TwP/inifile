@@ -45,9 +45,10 @@ class IniFile
   #
   def initialize( filename, opts = {} )
     @fn = filename
-    @comment = opts[:comment] || ';#'
-    @param = opts[:parameter] || '='
-    @encoding = opts[:encoding]
+    @comment = opts.fetch(:comment, ';#')
+    @param = opts.fetch(:parameter, '=')
+    @encoding = opts.fetch(:encoding, nil)
+
     @ini = Hash.new {|h,k| h[k] = Hash.new}
 
     @rgxp_comment = %r/\A\s*\z|\A\s*[#{@comment}]/
@@ -335,7 +336,7 @@ class IniFile
     parse
   end
 
-  private
+private
   #
   # call-seq
   #    parse
