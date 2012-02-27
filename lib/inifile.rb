@@ -218,6 +218,16 @@ class IniFile
   def []=( section, value )
     @ini[section.to_s] = value
   end
+  
+  #
+  # call-seq:
+  #    ini_file.match(/section/) = array
+  #
+  # Set a match and return hash with _sections_.
+  #
+  def match( regex )
+    @ini.delete_if{|k,v| k !~ regex}
+  end
 
   #
   # call-seq:
