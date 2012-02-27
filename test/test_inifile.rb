@@ -222,7 +222,7 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal expected, ini_file['one']
     assert_nil ini_file[nil]
   end
-  
+
   def test_match
     expected = {
      "section_two" =>
@@ -233,9 +233,12 @@ class TestIniFile < Test::Unit::TestCase
       {
         "four"=>"4", "five"=>"5", "six"=>"6"
       }
-     }
+    }
     assert_equal expected, @ini_file.match(/(two|three)/)
-    
+
+    # the match function should not delete entries from the inifile hash
+    assert_equal({'seven and eight' => '7 & 8'}, @ini_file['section_five'])
+
     expected = {}
     assert_equal expected, @ini_file.match(/houndreds/)
   end

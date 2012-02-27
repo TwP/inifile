@@ -12,7 +12,7 @@ class IniFile
 
   # :stopdoc:
   class Error < StandardError; end
-  VERSION = '0.4.1'
+  VERSION = '0.5.0'
   # :startdoc:
 
   #
@@ -218,15 +218,16 @@ class IniFile
   def []=( section, value )
     @ini[section.to_s] = value
   end
-  
+
   #
   # call-seq:
-  #    ini_file.match(/section/) = array
+  #    ini_file.match( /section/ )    #=> hash
   #
-  # Set a match and return hash with _sections_.
+  # Return a hash containing only those sections that match the given regular
+  # expression.
   #
   def match( regex )
-    @ini.delete_if{|k,v| k !~ regex}
+    @ini.dup.delete_if { |section, _| section !~ regex }
   end
 
   #
