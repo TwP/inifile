@@ -16,7 +16,7 @@ Bones {
   summary      'INI file reader and writer'
   authors      'Tim Pease'
   email        'tim.pease@gmail.com'
-  url          'http://gemcutter.org/gems/inifile'
+  url          'http://rubygems.org/gems/inifile'
   version      IniFile::VERSION
   ignore_file  '.gitignore'
 
