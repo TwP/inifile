@@ -74,12 +74,12 @@ section above. The following differences are also supported:
 
 == INSTALL:
 
-  sudo gem install inifile
+  gem install inifile
 
 == LICENSE:
 
 MIT License
-Copyright (c) 2006 - 2008
+Copyright (c) 2006 - 2012
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
