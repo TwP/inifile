@@ -20,7 +20,7 @@ class IniFile
   #    IniFile.load( filename )
   #    IniFile.load( filename, options )
   #
-  # Open the given _filename_ and load the contetns of the INI file.
+  # Open the given _filename_ and load the contents of the INI file.
   # The following _options_ can be passed to this method:
   #
   #    :comment => ';'      The line comment character(s)
@@ -66,7 +66,7 @@ class IniFile
   #    write
   #    write( filename )
   #
-  # Write the INI file contents to the filesystem. The given _filename_
+  # Write the INI file contents to the file system. The given _filename_
   # will be used to write the file. If _filename_ is not given, then the
   # named used when constructing this object will be used.
   # The following _options_ can be passed to this method:
@@ -134,7 +134,7 @@ class IniFile
   #   merge!( other_inifile )
   #
   # Merges other_inifile into this inifile, overwriting existing entries.
-  # Useful for having a system inifile with user overrideable settings elsewhere.
+  # Useful for having a system inifile with user overridable settings elsewhere.
   #
   def merge!( other )
     my_keys = @ini.keys
@@ -284,7 +284,7 @@ class IniFile
   #
   # Produces a duplicate of this INI file. The duplicate is independent of the
   # original -- i.e. the duplicate can be modified without changing the
-  # orgiinal. The tainted state of the original is copied to the duplicate.
+  # original. The tainted state of the original is copied to the duplicate.
   #
   def dup
     other = super
@@ -300,7 +300,7 @@ class IniFile
   #
   # Produces a duplicate of this INI file. The duplicate is independent of the
   # original -- i.e. the duplicate can be modified without changing the
-  # orgiinal. The tainted state and the frozen state of the original is copied
+  # original. The tainted state and the frozen state of the original is copied
   # to the duplicate.
   #
   def clone
@@ -356,23 +356,23 @@ class IniFile
     while line = fd.gets
       line = line.chomp
 
-      # mutline start
-      # create tmp variables to indicate that a multine has started
+      # multi-line start
+      # create tmp variables to indicate that a multi-line has started
       # and the next lines of the ini file will be checked
-      # against the other mutline rgxps.
+      # against the other multi-line rgxps.
       if line =~ @rgxp_multiline_start then
 
         tmp_param = $1.strip
         tmp_value = $2 + "\n"
 
-      # the mutline end-delimiter is found
+      # the multi-line end-delimiter is found
       # clear the tmp vars and add the param / value pair to the section
       elsif line =~ @rgxp_multiline_end && tmp_param != "" then
 
         section[tmp_param] = tmp_value + $1
         tmp_value, tmp_param = "", ""
 
-      # anything else between multiline start and end
+      # anything else between multi-line start and end
       elsif line =~ @rgxp_multiline_value && tmp_param != ""  then
 
         tmp_value += $1 + "\n"
