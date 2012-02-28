@@ -57,7 +57,6 @@ class TestIniFile < Test::Unit::TestCase
 
     # make sure we error out on files with bad lines
     assert_raise(IniFile::Error) {IniFile.load 'test/data/bad_1.ini'}
-    assert_raise(IniFile::Error) {IniFile.load 'test/data/bad_2.ini'}
   end
 
   def test_clone
@@ -254,7 +253,6 @@ class TestIniFile < Test::Unit::TestCase
 
     # make sure we error out on files with bad lines
     assert_raise(IniFile::Error) {IniFile.new 'test/data/bad_1.ini'}
-    assert_raise(IniFile::Error) {IniFile.new 'test/data/bad_2.ini'}
   end
 
   def test_sections
@@ -439,5 +437,20 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal %q{This string \\\\t contains \\\\n no \\\\r special \\\\0 characters!}, escaped['backslash']
   end
 
+  def test_global_section
+    ini_file = IniFile.load('test/data/global.ini')
+
+    assert_equal %w[global], ini_file.sections
+    assert_equal '1', ini_file['global']['one']
+    assert_equal '2', ini_file['global']['two']
+  end
+
+  def test_default_global_section
+    ini_file = IniFile.load('test/data/global.ini', :default => 'nonce')
+
+    assert_equal %w[nonce], ini_file.sections
+    assert_equal '1', ini_file['nonce']['one']
+    assert_equal '2', ini_file['nonce']['two']
+  end
 end
 

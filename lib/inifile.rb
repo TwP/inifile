@@ -52,6 +52,7 @@ class IniFile
     @param = opts.fetch(:parameter, '=')
     @encoding = opts.fetch(:encoding, nil)
     @escape = opts.fetch(:escape, true)
+    @default = opts.fetch(:default, 'global')
     @ini = Hash.new {|h,k| h[k] = Hash.new}
 
     @rgxp_comment = %r/\A\s*\z|\A\s*[#{@comment}]/
@@ -411,7 +412,7 @@ private
   def finish_property
     return unless @_current_param
 
-    raise Error, "parameter encountered before first section" if @_current_section.nil?
+    @_current_section = @ini[@default] if @_current_section.nil?
     @_current_section[@_current_param] = unescape @_current_value
 
     @_current_param = nil
