@@ -355,22 +355,22 @@ private
 
       # we ignore comment lines and blank lines
       if line =~ @rgxp_comment
-        finish_param_and_value
+        finish_property
         next
       end
 
       # place values in the current section
       if line =~ @rgxp_section
-        finish_param_and_value
+        finish_property
         @_current_section = @ini[$1.strip]
         next
       end
 
-      parse_param_and_value line
+      parse_property line
 
     end  # while
 
-    finish_param_and_value
+    finish_property
   ensure
     fd.close if defined? fd and fd
     @_current_section = nil
@@ -378,10 +378,10 @@ private
     @_current_value = nil
   end
 
-  # Attempt to parse a param and value from the given _line_. This method
-  # takes into account multi-line values.
+  # Attempt to parse a property name and value from the given _line_. This
+  # method takes into account multi-line values.
   #
-  def parse_param_and_value( line )
+  def parse_property( line )
     p = v = nil
     split = line =~ @rgxp_param
 
@@ -401,15 +401,14 @@ private
     if @_current_value then @_current_value << v
     else @_current_value = v end
 
-    if @_current_value =~ %r/\\\z/ then @_current_value << 'n'
-    else finish_param_and_value end
+    finish_property unless @_current_value.sub!(%r/\\\z/, "\n")
   end
 
-  # If there is a current param being parsed, finish this parse step by
-  # storing the param and value in the current section and resetting for the
+  # If there is a current property being parsed, finish this parse step by
+  # storing the name and value in the current section and resetting for the
   # next parse step.
   #
-  def finish_param_and_value
+  def finish_property
     return unless @_current_param
 
     raise Error, "parameter encountered before first section" if @_current_section.nil?

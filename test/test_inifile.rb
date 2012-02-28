@@ -417,5 +417,27 @@ class TestIniFile < Test::Unit::TestCase
     end
   end
 
+  def test_value_escaping
+    ini_file = IniFile.load('test/data/escape.ini')
+    escaped = ini_file['escaped']
+
+    assert_equal %Q{There is a tab\tcharacter in here somewhere}, escaped['tabs']
+    assert_equal %Q{Who uses these anyways?\r}, escaped['carriage return']
+    assert_equal %Q{Trust newline!\nAlways there when you need him.\nSplittin' those lines.}, escaped['newline']
+    assert_equal %Q{Who'd be silly enough to put\0 a null character in the middle of a string?\nStroustrup would not approve!}, escaped['null']
+    assert_equal %q{This string \t contains \n no \r special \0 characters!}, escaped['backslash']
+  end
+
+  def test_value_escaping_disabled
+    ini_file = IniFile.load('test/data/escape.ini', :escape => false)
+    escaped = ini_file['escaped']
+
+    assert_equal %q{There is a tab\tcharacter in here somewhere}, escaped['tabs']
+    assert_equal %q{Who uses these anyways?\r}, escaped['carriage return']
+    assert_equal %q{Trust newline!\nAlways there when you need him.\nSplittin' those lines.}, escaped['newline']
+    assert_equal %Q{Who'd be silly enough to put\\0 a null character in the middle of a string?\nStroustrup would not approve!}, escaped['null']
+    assert_equal %q{This string \\\\t contains \\\\n no \\\\r special \\\\0 characters!}, escaped['backslash']
+  end
+
 end
 
