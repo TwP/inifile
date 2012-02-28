@@ -1,4 +1,4 @@
-inifile
+inifile [![Build Status](https://secure.travis-ci.org/TwP/inifile.png)](http://travis-ci.org/TwP/inifile)
 =======
 
 This is a native Ruby package for reading and writing INI files.
