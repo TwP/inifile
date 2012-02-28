@@ -22,6 +22,9 @@ left of the equals sign and the value to the right.
 
     name=value
 
+All properties must exist within a section. If the file contains a property
+before the first section is declared, an error will be raised.
+
 ### Sections
 
 Section declarations start with *[* and end with *]* as in `[section1]` and
