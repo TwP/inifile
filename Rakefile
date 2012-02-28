@@ -18,7 +18,6 @@ Bones {
   email        'tim.pease@gmail.com'
   url          'http://rubygems.org/gems/inifile'
   version      IniFile::VERSION
-  ignore_file  '.gitignore'
 
   use_gmail
   depend_on    'bones-git', :development => true
