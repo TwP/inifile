@@ -22,9 +22,6 @@ left of the equals sign and the value to the right.
 
     name=value
 
-All properties must exist within a section. If the file contains a property
-before the first section is declared, an error will be raised.
-
 ### Sections
 
 Section declarations start with *[* and end with *]* as in `[section1]` and
@@ -60,6 +57,13 @@ Implementation
 The format of INI files is not well defined. Several assumptions are made by
 the **inifile** gem when parsing INI files. Most of these assumptions can be
 modified at, but the defaults are listed below.
+
+### Global Properties
+
+If the INI file lacks any section declarations, or if there are properties
+decalared before the first section, then these properties will be placed into
+a default "global" section. The name of this section can be configured when
+creating an `IniFile` instance.
 
 ### Duplicate Properties
 

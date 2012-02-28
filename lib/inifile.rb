@@ -12,7 +12,7 @@ class IniFile
 
   # :stopdoc:
   class Error < StandardError; end
-  VERSION = '1.0.0'
+  VERSION = '1.1.0'
   # :startdoc:
 
   #
@@ -23,10 +23,11 @@ class IniFile
   # Open the given _filename_ and load the contents of the INI file.
   # The following _options_ can be passed to this method:
   #
-  #    :comment => ';'      The line comment character(s)
-  #    :parameter => '='    The parameter / value separator
-  #    :encoding => nil     The encoding used for read/write (RUBY 1.9)
-  #    :escape => true      Whether or not to escape values when reading/writing
+  #    :comment => ';'       The line comment character(s)
+  #    :parameter => '='     The parameter / value separator
+  #    :encoding => nil      The encoding used for read/write (RUBY 1.9)
+  #    :escape => true       Whether or not to escape values when reading/writing
+  #    :default => 'global'  Default global section name
   #
   def self.load( filename, opts = {} )
     new(filename, opts)
@@ -41,10 +42,11 @@ class IniFile
   # exists and is a regular file, then its contents will be parsed.
   # The following _options_ can be passed to this method:
   #
-  #    :comment => ';'      The line comment character(s)
-  #    :parameter => '='    The parameter / value separator
-  #    :encoding => nil     The encoding used for read/write (RUBY 1.9)
-  #    :escape => true      Whether or not to escape values when reading/writing
+  #    :comment => ';'       The line comment character(s)
+  #    :parameter => '='     The parameter / value separator
+  #    :encoding => nil      The encoding used for read/write (RUBY 1.9)
+  #    :escape => true       Whether or not to escape values when reading/writing
+  #    :default => 'global'  Default global section name
   #
   def initialize( filename, opts = {} )
     @fn = filename
