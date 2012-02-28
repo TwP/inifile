@@ -26,6 +26,7 @@ class IniFile
   #    :comment => ';'      The line comment character(s)
   #    :parameter => '='    The parameter / value separator
   #    :encoding => nil     The encoding used for read/write (RUBY 1.9)
+  #    :escape => true      Whether or not to escape values when reading/writing
   #
   def self.load( filename, opts = {} )
     new(filename, opts)
@@ -43,12 +44,14 @@ class IniFile
   #    :comment => ';'      The line comment character(s)
   #    :parameter => '='    The parameter / value separator
   #    :encoding => nil     The encoding used for read/write (RUBY 1.9)
+  #    :escape => true      Whether or not to escape values when reading/writing
   #
   def initialize( filename, opts = {} )
     @fn = filename
     @comment = opts.fetch(:comment, ';#')
     @param = opts.fetch(:parameter, '=')
     @encoding = opts.fetch(:encoding, nil)
+    @escape = opts.fetch(:escape, true)
     @ini = Hash.new {|h,k| h[k] = Hash.new}
 
     @rgxp_comment = %r/\A\s*\z|\A\s*[#{@comment}]/
@@ -421,14 +424,16 @@ private
   # literal equivalents.
   #
   def unescape( value )
+    return value unless @escape
+
     value = value.to_s
-    value.gsub!(%r/\\[0trn\\]/) { |char|
+    value.gsub!(%r/\\[0nrt\\]/) { |char|
       case char
       when '\0';   "\0"
-      when '\t';   "\t"
-      when '\r';   "\r"
       when '\n';   "\n"
-      when "\\\\"; "\\"
+      when '\r';   "\r"
+      when '\t';   "\t"
+      when '\\\\'; "\\"
       end
     }
     value
@@ -437,12 +442,14 @@ private
   # Escape special characters
   #
   def escape( value )
+    return value unless @escape
+
     value = value.to_s.dup
-    value.gsub!(%r/\\/, "\\\\")
-    value.gsub!(%r/\n/, "\\n")
-    value.gsub!(%r/\r/, "\\r")
-    value.gsub!(%r/\t/, "\\t")
-    value.gsub!(%r/\0/, "\\0")
+    value.gsub!(%r/\\([0nrt])/, '\\\\\1')
+    value.gsub!(%r/\n/, '\n')
+    value.gsub!(%r/\r/, '\r')
+    value.gsub!(%r/\t/, '\t')
+    value.gsub!(%r/\0/, '\0')
     value
   end
 
