@@ -6,100 +6,150 @@
 #encoding: UTF-8
 
 class IniFile
-
-  # Inifile is enumerable.
   include Enumerable
 
-  # :stopdoc:
   class Error < StandardError; end
-  VERSION = '1.1.0'
-  # :startdoc:
+  VERSION = '2.0.0'
 
+  # Public: Open an INI file and load the contents.
   #
-  # call-seq:
-  #    IniFile.load( filename )
-  #    IniFile.load( filename, options )
+  # filename - The name of the fiel as a String
+  # opts     - The Hash of options (default: {})
+  #            :comment   - String containing the comment character(s)
+  #            :parameter - String used to separate parameter and value
+  #            :encoding  - Encoding String for reading / writing (Ruby 1.9)
+  #            :escape    - Boolean used to control character escaping
+  #            :default   - The String name of the default global section
   #
-  # Open the given _filename_ and load the contents of the INI file.
-  # The following _options_ can be passed to this method:
+  # Examples
   #
-  #    :comment => ';'       The line comment character(s)
-  #    :parameter => '='     The parameter / value separator
-  #    :encoding => nil      The encoding used for read/write (RUBY 1.9)
-  #    :escape => true       Whether or not to escape values when reading/writing
-  #    :default => 'global'  Default global section name
+  #   IniFile.load('file.ini')
+  #   #=> IniFile instance
+  #
+  #   IniFile.load('does/not/exist.ini')
+  #   #=> nil
+  #
+  # Returns an IniFile intsnace or nil if the file could not be opened.
   #
   def self.load( filename, opts = {} )
-    new(filename, opts)
+    return unless File.file? filename
+    new(opts.merge(:filename => filename))
   end
 
+  # Get and set the filename
+  attr_accessor :filename
+
+  # Public: Create a new INI file from the given content String which
+  # contains the INI file lines. If the content are omitted, then the
+  # :filename option is used to read in the content of the INI file. If
+  # neither the content for a filename is provided then an empty INI file is
+  # created.
   #
-  # call-seq:
-  #    IniFile.new( filename )
-  #    IniFile.new( filename, options )
+  # content - The String containing the INI file contents
+  # opts    - The Hash of options (default: {})
+  #           :comment   - String containing the comment character(s)
+  #           :parameter - String used to separate parameter and value
+  #           :encoding  - Encoding String for reading / writing (Ruby 1.9)
+  #           :escape    - Boolean used to control character escaping
+  #           :default   - The String name of the default global section
+  #           :filename  - The filename as a String
   #
-  # Create a new INI file using the given _filename_. If _filename_
-  # exists and is a regular file, then its contents will be parsed.
-  # The following _options_ can be passed to this method:
+  # Examples
   #
-  #    :comment => ';'       The line comment character(s)
-  #    :parameter => '='     The parameter / value separator
-  #    :encoding => nil      The encoding used for read/write (RUBY 1.9)
-  #    :escape => true       Whether or not to escape values when reading/writing
-  #    :default => 'global'  Default global section name
+  #   IniFile.new
+  #   #=> an empty IniFile instance
   #
-  def initialize( filename, opts = {} )
-    @fn = filename
+  #   IniFile.new( "[global]\nfoo=bar" )
+  #   #=> an IniFile instance
+  #
+  #   IniFile.new( :filename => 'file.ini', :encoding => 'UTF-8' )
+  #   #=> an IniFile instance
+  #
+  #   IniFile.new( "[global]\nfoo=bar", :comment => '#' )
+  #   #=> an IniFile instance
+  #
+  def initialize( content = nil, opts = {} )
+    opts, content = content, nil if Hash === content
+
+    @content = content
     @comment = opts.fetch(:comment, ';#')
     @param = opts.fetch(:parameter, '=')
     @encoding = opts.fetch(:encoding, nil)
     @escape = opts.fetch(:escape, true)
     @default = opts.fetch(:default, 'global')
+    @filename = opts.fetch(:filename, nil)
     @ini = Hash.new {|h,k| h[k] = Hash.new}
 
     @rgxp_comment = %r/\A\s*\z|\A\s*[#{@comment}]/
     @rgxp_section = %r/\A\s*\[([^\]]+)\]/
     @rgxp_param   = %r/[^\\]#{@param}/
 
-    parse
+    if    @content  then parse!
+    elsif @filename then read
+    end
   end
 
+  # Public: Write the contents of this IniFile to the file system. If left
+  # unspecified, the currently configured filename and encoding will be used.
+  # Otherwise the filename and encoding can be specified in the options hash.
   #
-  # call-seq:
-  #    write
-  #    write( filename )
+  # opts - The default options Hash
+  #        :filename - The filename as a String
+  #        :encoding - The encoding as a String (Ruby 1.9)
   #
-  # Write the INI file contents to the file system. The given _filename_
-  # will be used to write the file. If _filename_ is not given, then the
-  # named used when constructing this object will be used.
-  # The following _options_ can be passed to this method:
+  # Returns this IniFile instance.
   #
-  #    :encoding => nil     The encoding used for writing (RUBY 1.9)
-  #
-  def write( filename = nil, opts={} )
-    @fn = filename unless filename.nil?
-
-    encoding = opts[:encoding] || @encoding
-    mode = (RUBY_VERSION >= '1.9' && @encoding) ?
+  def write( opts = {} )
+    filename = opts.fetch(:filename, @filename)
+    encoding = opts.fetch(:encoding, @encoding)
+    mode = (RUBY_VERSION >= '1.9' && encoding) ?
          "w:#{encoding.to_s}" :
          'w'
 
-    File.open(@fn, mode) do |f|
+    File.open(filename, mode) do |f|
       @ini.each do |section,hash|
         f.puts "[#{section}]"
         hash.each {|param,val| f.puts "#{param} #{@param} #{escape val}"}
         f.puts
       end
     end
+
     self
   end
   alias :save :write
 
+  # Public: Read the contents of the INI file from the file system and replace
+  # and set the state of this IniFile instance. If left unspecified the
+  # currently configured filename and encoding will be used when reading from
+  # the file system. Otherwise the filename and encoding can be specified in
+  # the options hash.
   #
-  # call-seq:
-  #   to_s
+  # opts - The default options Hash
+  #        :filename - The filename as a String
+  #        :encoding - The encoding as a String (Ruby 1.9)
   #
-  # Convert IniFile to text format.
+  # Returns this IniFile instance if the read was successful; nil is returned
+  # if the file could not be read.
+  #
+  def read( opts = {} )
+    filename = opts.fetch(:filename, @filename)
+    encoding = opts.fetch(:encoding, @encoding)
+    return unless File.file? filename
+
+    mode = (RUBY_VERSION >= '1.9' && encoding) ?
+           "r:#{encoding.to_s}" :
+           'r'
+    fd = File.open(filename, mode)
+    @content = fd.read
+
+    parse!
+    self
+  ensure
+    fd.close if fd && !fd.closed?
+  end
+  alias :restore :read
+
+  # Returns this IniFile converted to a String.
   #
   def to_s
     s = []
@@ -111,33 +161,30 @@ class IniFile
     s.join("\n")
   end
 
-  #
-  # call-seq:
-  #   to_h
-  #
-  # Convert IniFile to hash format.
+  # Returns this IniFile converted to a Hash.
   #
   def to_h
     @ini.dup
   end
 
+  # Public: Creates a copy of this inifile with the entries from the
+  # other_inifile merged into the copy.
   #
-  # call-seq:
-  #   merge( other_inifile )
+  # other - The other IniFile.
   #
-  # Returns a copy of this inifile with the entries from the other_inifile
-  # merged into the copy.
+  # Returns a new IniFile.
   #
   def merge( other )
     self.dup.merge!(other)
   end
 
+  # Public: Merges other_inifile into this inifile, overwriting existing
+  # entries. Useful for having a system inifile with user over-ridable settings
+  # elsewhere.
   #
-  # call-seq:
-  #   merge!( other_inifile )
+  # other - The other IniFile.
   #
-  # Merges other_inifile into this inifile, overwriting existing entries.
-  # Useful for having a system inifile with user overridable settings elsewhere.
+  # Returns this IniFile.
   #
   def merge!( other )
     my_keys = @ini.keys
@@ -158,12 +205,19 @@ class IniFile
     self
   end
 
+  # Public: Yield each INI file section, parameter, and value in turn to the
+  # given block.
   #
-  # call-seq:
-  #    each {|section, parameter, value| block}
+  # block - The block that will be iterated by the each method. The block will
+  #         be passed the current section and the parameter / value pair.
   #
-  # Yield each _section_, _parameter_, _value_ in turn to the given
-  # _block_. The method returns immediately if no block is supplied.
+  # Examples
+  #
+  #   inifile.each do |section, parameter, value|
+  #     puts "#{parameter} = #{value} [in section - #{section}]"
+  #   end
+  #
+  # Returns this IniFile.
   #
   def each
     return unless block_given?
@@ -175,12 +229,18 @@ class IniFile
     self
   end
 
+  # Public: Yield each section in turn to the given block.
   #
-  # call-seq:
-  #    each_section {|section| block}
+  # block - The block that will be iterated by the each method. The block will
+  #         be passed the current section as a Hash.
   #
-  # Yield each _section_ in turn to the given _block_. The method returns
-  # immediately if no block is supplied.
+  # Examples
+  #
+  #   inifile.each_section do |section|
+  #     puts section.inspect
+  #   end
+  #
+  # Returns this IniFile.
   #
   def each_section
     return unless block_given?
@@ -188,77 +248,86 @@ class IniFile
     self
   end
 
+  # Public: Remove a section identified by name from the IniFile.
   #
-  # call-seq:
-  #    delete_section( section )
+  # section - The section name as a String.
   #
-  # Deletes the named _section_ from the INI file. Returns the
-  # parameter / value pairs if the section exists in the INI file. Otherwise,
-  # returns +nil+.
+  # Returns the deleted section Hash.
   #
   def delete_section( section )
     @ini.delete section.to_s
   end
 
+  # Public: Get the section Hash by name. If the section does not exist, then
+  # it will be created.
   #
-  # call-seq:
-  #    ini_file[section]
+  # section - The section name as a String.
   #
-  # Get the hash of parameter/value pairs for the given _section_. If the
-  # _section_ hash does not exist it will be created.
+  # Examples
+  #
+  #   inifile['global']
+  #   #=> global section Hash
+  #
+  # Returns the Hash of parameter/value pairs for this section.
   #
   def []( section )
     return nil if section.nil?
     @ini[section.to_s]
   end
 
+  # Public: Set the section to a hash of parameter/value pairs.
   #
-  # call-seq:
-  #    ini_file[section] = hash
+  # section - The section name as a String.
+  # value   - The Hash of parameter/value pairs.
   #
-  # Set the hash of parameter/value pairs for the given _section_.
+  # Examples
+  #
+  #   inifile['tenderloin'] = { 'gritty' => 'yes' }
+  #   #=> { 'gritty' => 'yes' }
+  #
+  # Returns the value Hash.
   #
   def []=( section, value )
     @ini[section.to_s] = value
   end
 
+  # Public: Create a Hash containing only those INI file sections whose names
+  # match the given regular expression.
   #
-  # call-seq:
-  #    ini_file.match( /section/ )    #=> hash
+  # regex - The Regexp used to match section names.
   #
-  # Return a hash containing only those sections that match the given regular
+  # Examples
+  #
+  #   inifile.match(/^tree_/)
+  #   #=> Hash of matching sections
+  #
+  # Return a Hash containing only those sections that match the given regular
   # expression.
   #
   def match( regex )
     @ini.dup.delete_if { |section, _| section !~ regex }
   end
 
+  # Public: Check to see if the IniFile contains the section.
   #
-  # call-seq:
-  #    has_section?( section )
+  # section - The section name as a String.
   #
-  # Returns +true+ if the named _section_ exists in the INI file.
+  # Returns true if the section exists in the IniFile.
   #
   def has_section?( section )
     @ini.has_key? section.to_s
   end
 
-  #
-  # call-seq:
-  #    sections
-  #
-  # Returns an array of the section names.
+  # Returns an Array of section names contained in this IniFile.
   #
   def sections
     @ini.keys
   end
 
+  # Public: Freeze the state of this IniFile object. Any attempts to change
+  # the object will raise an error.
   #
-  # call-seq:
-  #    freeze
-  #
-  # Freeze the state of the +IniFile+ object. Any attempts to change the
-  # object will raise an error.
+  # Returns this IniFile.
   #
   def freeze
     super
@@ -267,12 +336,10 @@ class IniFile
     self
   end
 
+  # Public: Mark this IniFile as tainted -- this will traverse each section
+  # marking each as tainted.
   #
-  # call-seq:
-  #    taint
-  #
-  # Marks the INI file as tainted -- this will traverse each section marking
-  # each section as tainted as well.
+  # Returns this IniFile.
   #
   def taint
     super
@@ -281,13 +348,11 @@ class IniFile
     self
   end
 
-  #
-  # call-seq:
-  #    dup
-  #
-  # Produces a duplicate of this INI file. The duplicate is independent of the
-  # original -- i.e. the duplicate can be modified without changing the
+  # Public: Produces a duplicate of this IniFile. The duplicate is independent
+  # of the original -- i.e. the duplicate can be modified without changing the
   # original. The tainted state of the original is copied to the duplicate.
+  #
+  # Returns a new IniFile.
   #
   def dup
     other = super
@@ -297,14 +362,12 @@ class IniFile
     other
   end
 
-  #
-  # call-seq:
-  #    clone
-  #
-  # Produces a duplicate of this INI file. The duplicate is independent of the
-  # original -- i.e. the duplicate can be modified without changing the
+  # Public: Produces a duplicate of this IniFile. The duplicate is independent
+  # of the original -- i.e. the duplicate can be modified without changing the
   # original. The tainted state and the frozen state of the original is copied
   # to the duplicate.
+  #
+  # Returns a new IniFile.
   #
   def clone
     other = dup
@@ -312,13 +375,13 @@ class IniFile
     other
   end
 
+  # Public: Compare this IniFile to some other IniFile. For two INI files to
+  # be equivalent, they must have the same sections with the same parameter /
+  # value pairs in each section.
   #
-  # call-seq:
-  #    eql?( other )
+  # other - The other IniFile.
   #
-  # Returns +true+ if the _other_ object is equivalent to this INI file. For
-  # two INI files to be equivalent, they must have the same sections with  the
-  # same parameter / value pairs in each section.
+  # Returns true if the INI files are equivalent and false if they differ.
   #
   def eql?( other )
     return true if equal? other
@@ -327,33 +390,21 @@ class IniFile
   end
   alias :== :eql?
 
-  #
-  # call-seq:
-  #   restore
-  #
-  # Restore data from the ini file. If the state of this object has been
-  # changed but not yet saved, this will effectively undo the changes.
-  #
-  def restore
-    parse
-  end
 
 private
 
-  # Parse the ini file contents.
+  # Parse the ini file contents. This will clear any values currently stored
+  # in the ini hash.
   #
-  def parse
-    return unless File.file?(@fn)
+  def parse!
+    return unless @content
 
     @_current_section = nil
     @_current_param = nil
     @_current_value = nil
+    @ini.clear
 
-    fd = (RUBY_VERSION >= '1.9' && @encoding) ?
-         File.open(@fn, 'r', :encoding => @encoding) :
-         File.open(@fn, 'r')
-
-    while line = fd.gets
+    @content.each_line do |line|
       line = line.chomp
 
       # we ignore comment lines and blank lines
@@ -371,7 +422,7 @@ private
 
       parse_property line
 
-    end  # while
+    end  # each_line
 
     finish_property
   ensure
@@ -383,6 +434,8 @@ private
 
   # Attempt to parse a property name and value from the given _line_. This
   # method takes into account multi-line values.
+  #
+  # line - The String containing the line to parse.
   #
   def parse_property( line )
     p = v = nil
@@ -425,6 +478,10 @@ private
   # escaped null, tab, carriage return, newline, and backslash into their
   # literal equivalents.
   #
+  # value - The String value to unescape.
+  #
+  # Returns the unescaped value.
+  #
   def unescape( value )
     return value unless @escape
 
@@ -441,7 +498,11 @@ private
     value
   end
 
-  # Escape special characters
+  # Escape special characters.
+  #
+  # value - The String value to escape.
+  #
+  # Returns the escaped value.
   #
   def escape( value )
     return value unless @escape
