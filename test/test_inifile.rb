@@ -237,18 +237,31 @@ class TestIniFile < Test::Unit::TestCase
     #assert_raise(IniFile::Error) {IniFile.new 'test/data/comment.ini'}
 
     ini_file = IniFile.new(:filename => 'test/data/comment.ini', :comment => '#')
-    assert_equal true, ini_file.has_section?('section_one')
+    assert ini_file.has_section?('section_one')
 
     # see if we can parse different style param separators
     assert_raise(IniFile::Error) {IniFile.new(:filename => 'test/data/param.ini')}
 
     ini_file = IniFile.new(:filename => 'test/data/param.ini', :parameter => ':')
-    assert_equal true, ini_file.has_section?('section_one')
+    assert ini_file.has_section?('section_one')
     assert_equal '1', ini_file['section_one']['one']
     assert_equal '2', ini_file['section_one']['two']
 
     # make sure we error out on files with bad lines
     assert_raise(IniFile::Error) {IniFile.new :filename => 'test/data/bad_1.ini'}
+  end
+
+  def test_initialize_from_string
+    content = File.read('test/data/good.ini')
+
+    ini_file = IniFile.new(content, :comment => ';')
+    assert ini_file.has_section?('section_one')
+    assert ini_file.has_section?('section_two')
+    assert ini_file.has_section?('section three')
+    assert ini_file.has_section?('section_four')
+    assert ini_file.has_section?('section_five')
+
+    assert_equal '7 & 8', ini_file['section_five']['seven and eight']
   end
 
   def test_sections
@@ -291,6 +304,22 @@ class TestIniFile < Test::Unit::TestCase
     assert_nil Kernel.test(?s, tmp)
 
     File.delete tmp if Kernel.test(?f, tmp)
+  end
+
+  def test_read
+    assert @ini_file.has_section?('section_one')
+
+    @ini_file['section_one']['one'] = 42
+    @ini_file['section_one']['two'] = 42
+    assert_equal 42, @ini_file['section_one']['one']
+    assert_equal 42, @ini_file['section_one']['two']
+
+    @ini_file.read
+    assert_equal '1', @ini_file['section_one']['one']
+    assert_equal '2', @ini_file['section_one']['two']
+
+    @ini_file.read(:filename => 'test/data/mixed_comment.ini')
+    assert_equal false, @ini_file.has_section?('section_two')
   end
 
   def test_modifies_current_keys
