@@ -1,3 +1,13 @@
+== 2.0.0 / 2012-08-29
+
+Major Enhancements
+  - Can now initialize from Strings [issue #9]
+  - Quoted multi-line values are supported
+  - Comments can appear at the end of a line
+Enhancements
+  - TomDoc documentation
+  - Parity between read/write methods
+
 == 1.1.0 / 2012-02-28
 
 Enhancements
