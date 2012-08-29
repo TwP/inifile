@@ -446,9 +446,15 @@ private
       elsif scanner.scan(%r/\A\s*\[([^\]]+)\]/)
         @_section = @ini[scanner[1]]
 
-      # store the next character and loop again
+      # otherwise scan and store characters till we hit the start of some
+      # special section like a quote, newline, comment, etc.
       else
-        string << scanner.getch
+        tmp = scanner.scan_until(%r/([\n"#{@param}#{@comment}]|\\[\[\]#{@param}#{@comment}"])/m)
+        len = scanner[1].length
+        tmp.slice!(tmp.length - len, len)
+
+        scanner.pos = scanner.pos - len
+        string << tmp
       end
     end
 
@@ -466,7 +472,7 @@ private
   def process_property( property, value )
     value.chomp!
     return if property.empty? and value.empty?
-    return if value.sub!(%r/\\\z/, '')
+    return if value.sub!(%r/\\\s*\z/, '')
 
     property.strip!
     value.strip!
