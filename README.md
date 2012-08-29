@@ -87,17 +87,42 @@ the earlier section.
 ### Comments
 
 The comment character can be either a semicolon *;* or a number sign *#*. The
-comment character must be the first non-whitespace character on the line. This
-means it is perfectly valid to include a comment character inside a **value**
-or event a property **name** (although this is not recommended). For this
-reason, comments cannot be placed on the end of a line after a name/value
-pair.
+comment character can appear anywhere on a line including at the end of a
+name/value pair declaration. If you wish to use a comment character in your
+value then you will need to either escape the character or put the value in
+double quotations.
+
+    [section1]
+    var1 = foo  # a comment
+    var2 = "foo # this is not a comment"
+    var3 = foo \# this is not a comment either
+
+### Multi-Line Values
+
+Values can be continued onto multiple lines in two separate ways. Putting a
+slash at the end of a line will continue the value declaration to the next
+line. When parsing, the trailing slash will be consumed and **will not**
+appear in the resulting value. Comments can appear to the right of the
+trailing slash.
+
+    var1 = this is a \  # these comments will
+    multiline value     # be ignored by the parser
+
+In the above example the resulting value for `var1` will be `this is a
+multiline value`. If you want to preserve newline characters in the value then
+quotations should be used.
+
+    var2 = "this is a
+    multiline value"
+
+The resulting value for `var2` will be `this is a\nmultiline value`.
 
 ### Escape Characters
 
 Several escape characters are supported within the **value** for a property.
-Most notably, a backslash *\* at the end of a line will continue the value
-onto the next line. When parsed, a literal newline will appear in the value.
+These escape sequences will be applied to quoted and unquoted values alike.
+You can enable or disable escaping by setting the **escape** flag to true or
+false when creating an IniFile instance.
 
 * \0 -- null character
 * \n -- newline character
@@ -108,7 +133,7 @@ onto the next line. When parsed, a literal newline will appear in the value.
 The backslash escape sequence is only needed if you want one of the escape
 sequences to appear literally in your value. For example:
 
-    property=this is not a tab \\t character
+    property = this is not a tab \\t character
 
 
 Install
