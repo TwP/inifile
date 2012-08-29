@@ -1,10 +1,9 @@
-#
+#encoding: UTF-8
+require 'strscan'
+
 # This class represents the INI file and can be used to parse, modify,
 # and write INI files.
 #
-
-#encoding: UTF-8
-
 class IniFile
   include Enumerable
 
@@ -39,6 +38,12 @@ class IniFile
   # Get and set the filename
   attr_accessor :filename
 
+  # Get and set the encoding (Ruby 1.9)
+  attr_accessor :encoding
+
+  # Enable or disable character escaping
+  attr_accessor :escape
+
   # Public: Create a new INI file from the given content String which
   # contains the INI file lines. If the content are omitted, then the
   # :filename option is used to read in the content of the INI file. If
@@ -72,17 +77,15 @@ class IniFile
     opts, content = content, nil if Hash === content
 
     @content = content
-    @comment = opts.fetch(:comment, ';#')
-    @param = opts.fetch(:parameter, '=')
-    @encoding = opts.fetch(:encoding, nil)
-    @escape = opts.fetch(:escape, true)
-    @default = opts.fetch(:default, 'global')
-    @filename = opts.fetch(:filename, nil)
-    @ini = Hash.new {|h,k| h[k] = Hash.new}
 
-    @rgxp_comment = %r/\A\s*\z|\A\s*[#{@comment}]/
-    @rgxp_section = %r/\A\s*\[([^\]]+)\]/
-    @rgxp_param   = %r/[^\\]#{@param}/
+    @comment  = opts.fetch(:comment, ';#')
+    @param    = opts.fetch(:parameter, '=')
+    @encoding = opts.fetch(:encoding, nil)
+    @escape   = opts.fetch(:escape, true)
+    @default  = opts.fetch(:default, 'global')
+    @filename = opts.fetch(:filename, nil)
+
+    @ini = Hash.new {|h,k| h[k] = Hash.new}
 
     if    @content  then parse!
     elsif @filename then read
@@ -109,7 +112,7 @@ class IniFile
     File.open(filename, mode) do |f|
       @ini.each do |section,hash|
         f.puts "[#{section}]"
-        hash.each {|param,val| f.puts "#{param} #{@param} #{escape val}"}
+        hash.each {|param,val| f.puts "#{param} #{@param} #{escape_value val}"}
         f.puts
       end
     end
@@ -155,7 +158,7 @@ class IniFile
     s = []
     @ini.each do |section,hash|
       s << "[#{section}]"
-      hash.each {|param,val| s << "#{param} #{@param} #{escape val}"}
+      hash.each {|param,val| s << "#{param} #{@param} #{escape_value val}"}
       s << ""
     end
     s.join("\n")
@@ -399,79 +402,100 @@ private
   def parse!
     return unless @content
 
-    @_current_section = nil
-    @_current_param = nil
-    @_current_value = nil
+    string = ''
+    property = ''
+
     @ini.clear
+    @_line = nil
+    @_section = nil
 
-    @content.each_line do |line|
-      line = line.chomp
+    scanner = StringScanner.new(@content)
+    until scanner.eos?
 
-      # we ignore comment lines and blank lines
-      if line =~ @rgxp_comment
-        finish_property
-        next
+      # keep track of the current line for error messages
+      @_line = scanner.check(%r/\A.*$/) if scanner.bol?
+
+      # look for escaped special characters \# \" etc
+      if scanner.scan(%r/\\([\[\]#{@param}#{@comment}"])/)
+        string << scanner[1]
+
+      # look for quoted strings
+      elsif scanner.scan(%r/"/)
+        quote = scanner.scan_until(/(?:\A|[^\\])"/)
+        parse_error('Unmatched quote') if quote.nil?
+
+        quote.chomp!('"')
+        string << quote
+
+      # look for comments, empty strings, end of lines
+      elsif scanner.skip(%r/\A\s*(?:[#{@comment}].*)?$/)
+        string << scanner.getch unless scanner.eos?
+
+        process_property(property, string)
+
+      # look for the separator between property name and value
+      elsif scanner.scan(%r/#{@param}/)
+        if property.empty?
+          property = string.strip
+          string.clear
+        else
+          parse_error
+        end
+
+      # look for the start of a new section
+      elsif scanner.scan(%r/\A\s*\[([^\]]+)\]/)
+        @_section = @ini[scanner[1]]
+
+      # store the next character and loop again
+      else
+        string << scanner.getch
       end
-
-      # place values in the current section
-      if line =~ @rgxp_section
-        finish_property
-        @_current_section = @ini[$1.strip]
-        next
-      end
-
-      parse_property line
-
-    end  # each_line
-
-    finish_property
-  ensure
-    fd.close if defined? fd and fd
-    @_current_section = nil
-    @_current_param = nil
-    @_current_value = nil
-  end
-
-  # Attempt to parse a property name and value from the given _line_. This
-  # method takes into account multi-line values.
-  #
-  # line - The String containing the line to parse.
-  #
-  def parse_property( line )
-    p = v = nil
-    split = line =~ @rgxp_param
-
-    if split
-      p = line.slice(0, split+1).strip
-      v = line.slice(split+2, line.length).strip
-    else
-      v = line
     end
 
-    if p.nil? and @_current_param.nil?
-      raise Error, "could not parse line '#{line}'"
-    end
-
-    @_current_param = p unless p.nil?
-
-    if @_current_value then @_current_value << v
-    else @_current_value = v end
-
-    finish_property unless @_current_value.sub!(%r/\\\z/, "\n")
+    process_property(property, string)
   end
 
-  # If there is a current property being parsed, finish this parse step by
-  # storing the name and value in the current section and resetting for the
-  # next parse step.
+  # Store the property / value pair in the currently active section. This
+  # method checks for continuation of the value to the next line.
   #
-  def finish_property
-    return unless @_current_param
+  # property - The property name as a String.
+  # value    - The property value as a String.
+  #
+  # Returns nil.
+  #
+  def process_property( property, value )
+    value.chomp!
+    return if property.empty? and value.empty?
+    return if value.sub!(%r/\\\z/, '')
 
-    @_current_section = @ini[@default] if @_current_section.nil?
-    @_current_section[@_current_param] = unescape @_current_value
+    property.strip!
+    value.strip!
 
-    @_current_param = nil
-    @_current_value = nil
+    parse_error if property.empty?
+
+    current_section[property.dup] = unescape_value(value.dup)
+
+    property.clear
+    value.clear
+
+    nil
+  end
+
+  # Returns the current section Hash.
+  #
+  def current_section
+    @_section ||= @ini[@default]
+  end
+
+  # Raise a parse error using the given message and appending the current line
+  # being parsed.
+  #
+  # msg - The message String to use.
+  #
+  # Raises IniFile::Error
+  #
+  def parse_error( msg = 'Could not parse line' )
+    raise Error, "#{msg}: #{@_line.inspect}"
   end
 
   # Unescape special characters found in the value string. This will convert
@@ -482,7 +506,7 @@ private
   #
   # Returns the unescaped value.
   #
-  def unescape( value )
+  def unescape_value( value )
     return value unless @escape
 
     value = value.to_s
@@ -504,7 +528,7 @@ private
   #
   # Returns the escaped value.
   #
-  def escape( value )
+  def escape_value( value )
     return value unless @escape
 
     value = value.to_s.dup

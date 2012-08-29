@@ -14,7 +14,7 @@ class TestIniFile < Test::Unit::TestCase
       ['section_one', 'one', '1'],
       ['section_one', 'two', '2'],
       ['section_two', 'three', '3'],
-      ['section_two', 'multi', "multiline\nsupport"],
+      ['section_two', 'multi', "multiline support"],
       ['section three', 'four', '4'],
       ['section three', 'five', '5'],
       ['section three', 'six', '6'],
@@ -184,7 +184,7 @@ class TestIniFile < Test::Unit::TestCase
     }
     assert_equal expected, @ini_file[:section_one]
 
-    expected = {'three' => '3', 'multi' => "multiline\nsupport"}
+    expected = {'three' => '3', 'multi' => "multiline support"}
     assert_equal expected, @ini_file['section_two']
 
     expected = {
@@ -216,7 +216,7 @@ class TestIniFile < Test::Unit::TestCase
     expected = {
      "section_two" =>
       {
-        "three"=>"3", "multi"=>"multiline\nsupport"
+        "three"=>"3", "multi"=>"multiline support"
       },
      "section three" =>
       {
@@ -238,6 +238,7 @@ class TestIniFile < Test::Unit::TestCase
 
     ini_file = IniFile.new(:filename => 'test/data/comment.ini', :comment => '#')
     assert ini_file.has_section?('section_one')
+    assert_equal '20 + 22 = 42', ini_file['section_two']['multi']
 
     # see if we can parse different style param separators
     assert_raise(IniFile::Error) {IniFile.new(:filename => 'test/data/param.ini')}
@@ -375,11 +376,12 @@ class TestIniFile < Test::Unit::TestCase
     ini_file = IniFile.load('test/data/multiline.ini')
 
     multiline = ini_file['section_three']
-    expected = {"three" => "hello\nmultiline", "other" => '"stuff"'}
+    expected = {"three" => "hello multiline", "other" => "stuff"}
     assert_equal expected, multiline
 
     multiple = ini_file['section_four']
-    expected = {"four" => "hello\nmultiple\nmultilines"}
+    expected = {"four" => "hello multiple multilines",
+                "five" => "multiple lines\ninside of quotations\npreserve everything" }
     assert_equal expected, multiple
 
     multiple = ini_file['empty_lines']
@@ -447,8 +449,9 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal %Q{There is a tab\tcharacter in here somewhere}, escaped['tabs']
     assert_equal %Q{Who uses these anyways?\r}, escaped['carriage return']
     assert_equal %Q{Trust newline!\nAlways there when you need him.\nSplittin' those lines.}, escaped['newline']
-    assert_equal %Q{Who'd be silly enough to put\0 a null character in the middle of a string?\nStroustrup would not approve!}, escaped['null']
+    assert_equal %Q{Who'd be silly enough to put\0 a null character in the middle of a string? Stroustrup would not approve!}, escaped['null']
     assert_equal %q{This string \t contains \n no \r special \0 characters!}, escaped['backslash']
+    assert_equal %Q{Escaping works\tinside quoted strings!}, escaped['quoted']
   end
 
   def test_value_escaping_disabled
@@ -458,8 +461,9 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal %q{There is a tab\tcharacter in here somewhere}, escaped['tabs']
     assert_equal %q{Who uses these anyways?\r}, escaped['carriage return']
     assert_equal %q{Trust newline!\nAlways there when you need him.\nSplittin' those lines.}, escaped['newline']
-    assert_equal %Q{Who'd be silly enough to put\\0 a null character in the middle of a string?\nStroustrup would not approve!}, escaped['null']
+    assert_equal %Q{Who'd be silly enough to put\\0 a null character in the middle of a string? Stroustrup would not approve!}, escaped['null']
     assert_equal %q{This string \\\\t contains \\\\n no \\\\r special \\\\0 characters!}, escaped['backslash']
+    assert_equal %q{Escaping works\tinside quoted strings!}, escaped['quoted']
   end
 
   def test_global_section
