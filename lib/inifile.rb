@@ -437,7 +437,7 @@ private
       elsif scanner.scan(%r/#{@param}/)
         if property.empty?
           property = string.strip
-          string.clear
+          string.slice!(0, string.length)
         else
           parse_error
         end
@@ -481,8 +481,8 @@ private
 
     current_section[property.dup] = unescape_value(value.dup)
 
-    property.clear
-    value.clear
+    property.slice!(0, property.length)
+    value.slice!(0, value.length)
 
     nil
   end
