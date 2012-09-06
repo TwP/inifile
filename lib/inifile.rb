@@ -450,6 +450,8 @@ private
       # special section like a quote, newline, comment, etc.
       else
         tmp = scanner.scan_until(%r/([\n"#{@param}#{@comment}]|\\[\[\]#{@param}#{@comment}"])/m)
+        parse_error if tmp.nil?
+
         len = scanner[1].length
         tmp.slice!(tmp.length - len, len)
 
