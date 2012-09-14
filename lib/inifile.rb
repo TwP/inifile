@@ -449,7 +449,7 @@ private
       # otherwise scan and store characters till we hit the start of some
       # special section like a quote, newline, comment, etc.
       else
-        tmp = scanner.scan_until(%r/([\n"#{@param}#{@comment}]|\\[\[\]#{@param}#{@comment}"])/m)
+        tmp = scanner.scan_until(%r/([\n"#{@param}#{@comment}] | \z | \\[\[\]#{@param}#{@comment}"])/mx)
         parse_error if tmp.nil?
 
         len = scanner[1].length
