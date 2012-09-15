@@ -252,6 +252,13 @@ class TestIniFile < Test::Unit::TestCase
     assert_raise(IniFile::Error) {IniFile.new :filename => 'test/data/bad_1.ini'}
   end
 
+  def test_initialize_from_string_without_ending_newline
+    content = "[section_one]\n  foo=bar"
+    ini_file = IniFile.new(content)
+    assert ini_file.has_section?('section_one')
+    assert_equal 'bar', ini_file['section_one']['foo']
+  end
+
   def test_initialize_from_string
     content = File.read('test/data/good.ini')
 
