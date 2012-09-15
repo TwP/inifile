@@ -8,7 +8,7 @@ class IniFile
   include Enumerable
 
   class Error < StandardError; end
-  VERSION = '2.0.1'
+  VERSION = '2.0.2'
 
   # Public: Open an INI file and load the contents.
   #
