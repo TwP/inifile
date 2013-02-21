@@ -12,7 +12,7 @@ class IniFile
 
   # Public: Open an INI file and load the contents.
   #
-  # filename - The name of the fiel as a String
+  # filename - The name of the file as a String
   # opts     - The Hash of options (default: {})
   #            :comment   - String containing the comment character(s)
   #            :parameter - String used to separate parameter and value
@@ -28,7 +28,7 @@ class IniFile
   #   IniFile.load('does/not/exist.ini')
   #   #=> nil
   #
-  # Returns an IniFile intsnace or nil if the file could not be opened.
+  # Returns an IniFile instance or nil if the file could not be opened.
   #
   def self.load( filename, opts = {} )
     return unless File.file? filename
@@ -182,7 +182,7 @@ class IniFile
   end
 
   # Public: Merges other_inifile into this inifile, overwriting existing
-  # entries. Useful for having a system inifile with user over-ridable settings
+  # entries. Useful for having a system inifile with user overridable settings
   # elsewhere.
   #
   # other - The other IniFile.
@@ -212,7 +212,7 @@ class IniFile
   # given block.
   #
   # block - The block that will be iterated by the each method. The block will
-  #         be passed the current section and the parameter / value pair.
+  #         be passed the current section and the parameter/value pair.
   #
   # Examples
   #
@@ -463,7 +463,7 @@ private
     process_property(property, string)
   end
 
-  # Store the property / value pair in the currently active section. This
+  # Store the property/value pair in the currently active section. This
   # method checks for continuation of the value to the next line.
   #
   # property - The property name as a String.
