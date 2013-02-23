@@ -9,7 +9,7 @@ require 'test/unit'
 class TestIniFile < Test::Unit::TestCase
 
   def setup
-#    @ini_file = IniFile.new(:filename => 'test/data/good.ini')
+    @ini_file = IniFile.new(:filename => 'test/data/good.ini')
     @contents = [
       ['section_one', 'one', '1'],
       ['section_one', 'two', '2'],
