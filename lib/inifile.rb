@@ -525,6 +525,7 @@ private
       when '\r';   "\r"
       when '\t';   "\t"
       when '\\\\'; "\\"
+      when "\\#{@param}"; "#{@param}"
       end
     }
     value
@@ -545,6 +546,7 @@ private
     value.gsub!(%r/\r/, '\r')
     value.gsub!(%r/\t/, '\t')
     value.gsub!(%r/\0/, '\0')
+    value.gsub!(%r/#{Regexp.escape(@param)}/, "\\#{@param}")
     value
   end
 

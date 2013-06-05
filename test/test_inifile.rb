@@ -488,5 +488,28 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal '1', ini_file['nonce']['one']
     assert_equal '2', ini_file['nonce']['two']
   end
+
+  def test_round_trip_with_value_including_parameter
+    ini_file = IniFile.new(:filename => 'test/data/tmp.ini')
+    ini_file['foo'] = {
+      'bar' => '= baz'
+    }
+    ini_file.write
+
+    ini_file = IniFile.load('test/data/tmp.ini')
+    assert_equal '= baz', ini_file['foo']['bar']
+
+    FileUtils.rm_rf "test/data/tmp.ini"
+
+    ini_file = IniFile.new(:filename => 'test/data/tmp.ini')
+    ini_file['foo'] = {
+      'bar' => '== baz'
+    }
+    ini_file.write
+
+    ini_file = IniFile.load('test/data/tmp.ini')
+    assert_equal '== baz', ini_file['foo']['bar']
+
+  end
 end
 
