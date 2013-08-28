@@ -50,14 +50,13 @@ class IniFile
   # neither the content for a filename is provided then an empty INI file is
   # created.
   #
-  # content - The String containing the INI file contents
-  # opts    - The Hash of options (default: {})
-  #           :comment   - String containing the comment character(s)
-  #           :parameter - String used to separate parameter and value
-  #           :encoding  - Encoding String for reading / writing (Ruby 1.9)
-  #           :escape    - Boolean used to control character escaping
-  #           :default   - The String name of the default global section
-  #           :filename  - The filename as a String
+  # content   - The String containing the INI file contents
+  # comment   - String containing the comment character(s)
+  # parameter - String used to separate parameter and value
+  # encoding  - Encoding String for reading / writing (Ruby 1.9)
+  # escape    - Boolean used to control character escaping
+  # default   - The String name of the default global section
+  # filename  - The filename as a String
   #
   # Examples
   #
@@ -70,14 +69,14 @@ class IniFile
   #   IniFile.new( :filename => 'file.ini', :encoding => 'UTF-8' )
   #   #=> an IniFile instance
   #
-  #   IniFile.new( "[global]\nfoo=bar", :comment => '#' )
+  #   IniFile.new( :content => "[global]\nfoo=bar", :comment => '#' )
   #   #=> an IniFile instance
   #
-  def initialize( content = nil, opts = {} )
-    opts, content = content, nil if Hash === content
+  def initialize( opts ={} )
 
-    @content = content
+    opts = { :content => opts } if String === opts
 
+    @content  = opts.fetch(:content, nil)
     @comment  = opts.fetch(:comment, ';#')
     @param    = opts.fetch(:parameter, '=')
     @encoding = opts.fetch(:encoding, nil)
@@ -85,10 +84,15 @@ class IniFile
     @default  = opts.fetch(:default, 'global')
     @filename = opts.fetch(:filename, nil)
 
-    @ini = Hash.new {|h,k| h[k] = Hash.new}
-
-    if    @content  then parse!
-    elsif @filename then read
+    if Hash === @content
+      @ini = @content
+    else
+      @ini = Hash.new {|h,k| h[k] = Hash.new}
+      if String === @content
+        parse!
+      elsif @filename
+        read
+      end
     end
   end
 
