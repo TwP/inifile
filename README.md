@@ -150,6 +150,15 @@ To run the tests:
     $ rake
 
 
+Examples
+--------
+
+    require 'inifile'
+    myini = IniFile.load('mytest.ini')
+    myini.each_section do |section|
+      puts "I want #{myini[section]['somevar']} printed here!"
+    end
+
 Contributing
 ------------
 
