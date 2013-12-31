@@ -428,6 +428,36 @@ class TestIniFile < Test::Unit::TestCase
     # original object is unchanged
     assert_equal '1', @ini_file['section_one']['one']
   end
+  
+  def test_value_typecasting
+    ini = IniFile.load('test/data/good.ini', classify: true)
+    
+    expected = {
+      'one' => 1,
+      'two' => 2
+    }
+    assert_equal expected, ini[:section_one]
+
+    expected = {'three' => 3, 'multi' => "multiline support"}
+    assert_equal expected, ini['section_two']
+
+    expected = {
+      'four' => 4,
+      'five' => 5,
+      'six'  => 6,
+    }
+    
+    assert_equal expected, ini['section three']
+  end
+  
+  def test_value_setting_with_typecasting
+    ini = IniFile.load('test/data/good.ini', classify: true)
+    ini_merge = ini.merge({
+      'section_one' => { 'one' => 4.3 }
+    })
+    
+    assert_equal 4.3, ini_merge["section_one"]["one"]
+  end
 
   if RUBY_VERSION >= '1.9'
     def test_parse_encoding
@@ -489,4 +519,3 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal '2', ini_file['nonce']['two']
   end
 end
-
