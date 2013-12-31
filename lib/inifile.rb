@@ -43,6 +43,9 @@ class IniFile
 
   # Enable or disable character escaping
   attr_accessor :escape
+  
+  # Enable or disable typecasting
+  attr_accessor :classify
 
   # Public: Create a new INI file from the given content String which
   # contains the INI file lines. If the content are omitted, then the
@@ -58,6 +61,7 @@ class IniFile
   #           :escape    - Boolean used to control character escaping
   #           :default   - The String name of the default global section
   #           :filename  - The filename as a String
+  #           :classify - Booelan used to control character typecasting
   #
   # Examples
   #
@@ -84,6 +88,7 @@ class IniFile
     @escape   = opts.fetch(:escape, true)
     @default  = opts.fetch(:default, 'global')
     @filename = opts.fetch(:filename, nil)
+    @classify = opts.fetch(:classify, false)
 
     @ini = Hash.new {|h,k| h[k] = Hash.new}
 
@@ -291,7 +296,7 @@ class IniFile
   # Returns the value Hash.
   #
   def []=( section, value )
-    @ini[section.to_s] = value
+    @ini[section.to_s] = @classify ? typecast(value) : value
   end
 
   # Public: Create a Hash containing only those INI file sections whose names
@@ -527,7 +532,12 @@ private
       when '\\\\'; "\\"
       end
     }
-    value
+    
+    if @classify
+      typecast(value)
+    else
+      value
+    end
   end
 
   # Escape special characters.
@@ -546,6 +556,23 @@ private
     value.gsub!(%r/\t/, '\t')
     value.gsub!(%r/\0/, '\0')
     value
+  end
+  
+  # Attempt to typecast values
+  #
+  # value = the string to typecast
+  #
+  # Returns the typecasted value
+  #
+  def typecast(value)
+    case value
+      when /^\s*$/                                        then nil
+      when /^-?(?:\d|[1-9]\d+)$/                          then Integer(value)
+      when /^-?(?:\d|[1-9]\d+)(?:\.\d+)?(?:e[+-]?\d+)?$/i then Float(value)
+      when /true/i                                        then true
+      when /false/i                                       then false
+      else                                                     value
+    end
   end
 
 end  # IniFile
