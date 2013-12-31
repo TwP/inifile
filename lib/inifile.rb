@@ -61,7 +61,7 @@ class IniFile
   #           :escape    - Boolean used to control character escaping
   #           :default   - The String name of the default global section
   #           :filename  - The filename as a String
-  #           :typecast - Booelan used to control character typecasting
+  #           :classify - Booelan used to control character typecasting
   #
   # Examples
   #
