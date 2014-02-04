@@ -53,6 +53,13 @@ class TestIniFile < Test::Unit::TestCase
 
     # make sure we error out on files with bad lines
     assert_raise(IniFile::Error) {IniFile.load 'test/data/bad_1.ini'}
+
+    # make sure we error out on sloppy escaping
+    assert_raise(IniFile::Error) {IniFile.load 'test/data/no_escaping.ini'}
+
+    ini_file = IniFile.load 'test/data/no_escaping.ini', :escape => false
+    assert_instance_of IniFile, ini_file
+
   end
 
   def test_clone
@@ -487,6 +494,12 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal %w[nonce], ini_file.sections
     assert_equal '1', ini_file['nonce']['one']
     assert_equal '2', ini_file['nonce']['two']
+  end
+
+  def test_unescaped_items
+    ini_file = IniFile.load('test/data/no_escaping.ini', :escape => false)
+
+    assert_equal 'key\=value', ini_file['unescaped_param']['two']
   end
 end
 

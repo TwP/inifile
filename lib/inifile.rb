@@ -416,7 +416,7 @@ private
       @_line = scanner.check(%r/\A.*$/) if scanner.bol?
 
       # look for escaped special characters \# \" etc
-      if scanner.scan(%r/\\([\[\]#{@param}#{@comment}"])/)
+      if @escape && scanner.scan(%r/\\([\[\]#{@param}#{@comment}"])/)
         string << scanner[1]
 
       # look for quoted strings
@@ -438,6 +438,9 @@ private
         if property.empty?
           property = string.strip
           string.slice!(0, string.length)
+        elsif !@escape
+          scanner.pos = scanner.pos - @param.length
+          string << read_to_next_token(scanner, true)
         else
           parse_error
         end
@@ -449,14 +452,28 @@ private
       # otherwise scan and store characters till we hit the start of some
       # special section like a quote, newline, comment, etc.
       else
-        tmp = scanner.scan_until(%r/([\n"#{@param}#{@comment}] | \z | \\[\[\]#{@param}#{@comment}"])/mx)
+        string << read_to_next_token(scanner, false)
+      end
+
+      def read_to_next_token(scanner, read_value)
+
+        scan_regex = if read_value
+                       %r/([\n"] | \z | \\[\[\]#{@param}#{@comment}"])/mx
+                      elsif @escape then
+                       %r/([\n"#{@param}#{@comment}] | \z | \\[\[\]#{@param}#{@comment}"])/mx
+                     else
+                       %r/([\n"#{@param}#{@comment}] | \z)/mx
+                     end
+
+        tmp = scanner.scan_until(scan_regex)
         parse_error if tmp.nil?
 
         len = scanner[1].length
         tmp.slice!(tmp.length - len, len)
 
         scanner.pos = scanner.pos - len
-        string << tmp
+
+        tmp
       end
     end
 
