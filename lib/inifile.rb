@@ -413,7 +413,15 @@ private
     until scanner.eos?
 
       # keep track of the current line for error messages
-      @_line = scanner.check(%r/\A.*$/) if scanner.bol?
+      if scanner.bol?
+        @_line = scanner.check(%r/\A.*$/)
+
+        # look for the start of a new section only when we are
+        # at the beginning of a line
+        if scanner.scan(%r/\A\s*\[([^\]]+)\]/)
+          @_section = @ini[scanner[1]]
+        end
+      end
 
       # look for escaped special characters \# \" etc
       if scanner.scan(%r/\\([\[\]#{@param}#{@comment}"])/)
@@ -441,10 +449,6 @@ private
         else
           parse_error
         end
-
-      # look for the start of a new section
-      elsif scanner.scan(%r/\A\s*\[([^\]]+)\]/)
-        @_section = @ini[scanner[1]]
 
       # otherwise scan and store characters till we hit the start of some
       # special section like a quote, newline, comment, etc.
