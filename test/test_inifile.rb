@@ -488,5 +488,13 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal '1', ini_file['nonce']['one']
     assert_equal '2', ini_file['nonce']['two']
   end
+
+  def test_unescaped_section_header_as_value
+    ini_file = IniFile.load('test/data/section.ini')
+
+    assert_equal %w[section_one], ini_file.sections
+    assert_equal '[value]', ini_file['section_one']['one']
+    assert_equal '2', ini_file['section_one']['two']
+  end
 end
 
