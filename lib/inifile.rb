@@ -17,7 +17,6 @@ class IniFile
   #            :comment   - String containing the comment character(s)
   #            :parameter - String used to separate parameter and value
   #            :encoding  - Encoding String for reading / writing (Ruby 1.9)
-  #            :escape    - Boolean used to control character escaping
   #            :default   - The String name of the default global section
   #
   # Examples
@@ -41,9 +40,6 @@ class IniFile
   # Get and set the encoding (Ruby 1.9)
   attr_accessor :encoding
 
-  # Enable or disable character escaping
-  attr_accessor :escape
-
   # Public: Create a new INI file from the given content String which
   # contains the INI file lines. If the content are omitted, then the
   # :filename option is used to read in the content of the INI file. If
@@ -55,7 +51,6 @@ class IniFile
   #           :comment   - String containing the comment character(s)
   #           :parameter - String used to separate parameter and value
   #           :encoding  - Encoding String for reading / writing (Ruby 1.9)
-  #           :escape    - Boolean used to control character escaping
   #           :default   - The String name of the default global section
   #           :filename  - The filename as a String
   #
@@ -81,7 +76,6 @@ class IniFile
     @comment  = opts.fetch(:comment, ';#')
     @param    = opts.fetch(:parameter, '=')
     @encoding = opts.fetch(:encoding, nil)
-    @escape   = opts.fetch(:escape, true)
     @default  = opts.fetch(:default, 'global')
     @filename = opts.fetch(:filename, nil)
 
@@ -519,8 +513,6 @@ private
   # Returns the unescaped value.
   #
   def unescape_value( value )
-    return value unless @escape
-
     value = value.to_s
     value.gsub!(%r/\\[0nrt\\]/) { |char|
       case char
@@ -541,8 +533,6 @@ private
   # Returns the escaped value.
   #
   def escape_value( value )
-    return value unless @escape
-
     value = value.to_s.dup
     value.gsub!(%r/\\([0nrt])/, '\\\\\1')
     value.gsub!(%r/\n/, '\n')
