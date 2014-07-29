@@ -404,11 +404,76 @@ class IniFile
 
   class Parser
 
+    attr_writer :section
+    attr_accessor :property
+    attr_accessor :value
+
     def initialize( hash, param, comment, default )
       @hash = hash
-      @param = param
-      @comment = comment
       @default = default
+
+      comment = comment.to_s.empty? ? "\\z" : "\\s*(?:[#{comment}].*)?\\z"
+
+      @section_regexp  = %r/\A\s*\[([^\]]+)\]#{comment}/
+      @ignore_regexp   = %r/\A#{comment}/
+      @property_regexp = %r/\A(.*?)(?<!\\)#{param}(.*)\z/
+
+      @open_quote      = %r/\A\s*(".*)\z/
+      @close_quote     = %r/\A(.*(?<!\\)")#{comment}/
+      @full_quote      = %r/\A\s*(".*(?<!\\)")#{comment}/
+      @trailing_slash  = %r/\A(.*)(?<!\\)\\#{comment}/
+      @normal_value    = %r/\A(.*?)#{comment}/
+    end
+
+    def leading_quote?
+      value && value =~ %r/\A"/
+    end
+
+    def parse_value( string )
+      continuation = false
+
+      # if our value starts with a double quote, then we are in a
+      # line continuation situation
+      if leading_quote?
+        # check for a closing quote at the end of the string
+        if string =~ @close_quote
+          value << $1
+
+        # otherwise just append the string to the value
+        else
+          value << string
+          continuation = true
+        end
+
+      # not currently processing a continuation line
+      else
+        case string
+        when @full_quote
+          self.value = $1
+
+        when @open_quote
+          self.value = $1
+          continuation = true
+
+        when @trailing_slash
+          self.value ?  self.value << $1 : self.value = $1
+          continuation = true
+
+        when @normal_value
+          self.value ?  self.value << $1 : self.value = $1
+
+        else
+          error
+        end
+      end
+
+      if continuation
+        self.value << $/ if leading_quote?
+      else
+        process_property
+      end
+
+      continuation
     end
 
     # Parse the ini file contents. This will clear any values currently stored
@@ -416,99 +481,57 @@ class IniFile
     def parse( content )
       return unless content
 
-      string = ''
-      property = ''
+      continuation = false
 
       @hash.clear
-      @_line = nil
-      @_section = nil
+      @line = nil
+      self.section = nil
 
-      scanner = StringScanner.new(content)
-      until scanner.eos?
+      content.each_line do |line|
+        @line = line.chomp
 
-        # keep track of the current line for error messages
-        if scanner.bol?
-          @_line = scanner.check(%r/\A.*$/)
-
-          # look for the start of a new section only when we are
-          # at the beginning of a line
-          if scanner.scan(%r/\A\s*\[([^\]]+)\]/)
-            @_section = @hash[scanner[1]]
-          end
-        end
-
-        # look for escaped special characters \# \" etc
-        if scanner.scan(%r/\\([\[\]#{@param}#{@comment}"])/)
-          string << scanner[1]
-
-        # look for quoted strings
-        elsif scanner.scan(%r/"/)
-          quote = scanner.scan_until(/(?:\A|[^\\])"/)
-          parse_error('Unmatched quote') if quote.nil?
-
-          quote.chomp!('"')
-          string << quote
-
-        # look for comments, empty strings, end of lines
-        elsif scanner.skip(%r/\A\s*(?:[#{@comment}].*)?$/)
-          string << scanner.getch unless scanner.eos?
-
-          process_property(property, string)
-
-        # look for the separator between property name and value
-        elsif scanner.scan(%r/#{@param}/)
-          if property.empty?
-            property = string.strip
-            string.slice!(0, string.length)
-          else
-            parse_error
-          end
-
-        # otherwise scan and store characters till we hit the start of some
-        # special section like a quote, newline, comment, etc.
+        if continuation
+          continuation = parse_value @line
         else
-          tmp = scanner.scan_until(%r/([\n"#{@param}#{@comment}] | \z | \\[\[\]#{@param}#{@comment}"])/mx)
-          parse_error if tmp.nil?
+          case @line
+          when @ignore_regexp
+            nil
+          when @section_regexp
+            self.section = @hash[$1]
+          when @property_regexp
+            self.property = $1.strip
+            error if property.empty?
 
-          len = scanner[1].length
-          tmp.slice!(tmp.length - len, len)
-
-          scanner.pos = scanner.pos - len
-          string << tmp
+            continuation = parse_value $2
+          else
+            error
+          end
         end
       end
 
-      process_property(property, string)
+      # check here if we have a dangling value ... means we have an unclosed
+      # continuation
     end
 
     # Store the property/value pair in the currently active section. This
     # method checks for continuation of the value to the next line.
     #
-    # property - The property name as a String.
-    # value    - The property value as a String.
-    #
     # Returns nil.
-    def process_property( property, value )
-      value.chomp!
-      return if property.empty? and value.empty?
-      return if value.sub!(%r/\\\s*\z/, '')
-
+    def process_property
       property.strip!
       value.strip!
 
-      parse_error if property.empty?
+      self.value = $1 if value =~ %r/\A"(.*)(?<!\\)"\z/m
 
-      current_section[property.dup] = unescape_value(value.dup)
+      section[property] = unescape_value(value)
 
-      property.slice!(0, property.length)
-      value.slice!(0, value.length)
-
-      nil
+      self.property = nil
+      self.value = nil
     end
 
     # Returns the current section Hash.
-    def current_section
-      @_section ||= @hash[@default]
+    def section
+      @section ||= @hash[@default]
     end
 
     # Raise a parse error using the given message and appending the current line
@@ -517,8 +540,8 @@ class IniFile
     # msg - The message String to use.
     #
     # Raises IniFile::Error
-    def parse_error( msg = 'Could not parse line' )
-      raise Error, "#{msg}: #{@_line.inspect}"
+    def error( msg = 'Could not parse line' )
+      raise Error, "#{msg}: #{@line.inspect}"
     end
 
     # Unescape special characters found in the value string. This will convert
