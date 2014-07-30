@@ -535,7 +535,7 @@ class IniFile
 
       self.value = $1 if value =~ %r/\A"(.*)(?<!\\)"\z/m
 
-      section[property] = unescape_value(value)
+      section[property] = typecast(value)
 
       self.property = nil
       self.value = nil
@@ -554,6 +554,30 @@ class IniFile
     # Raises IniFile::Error
     def error( msg = 'Could not parse line' )
       raise Error, "#{msg}: #{@line.inspect}"
+    end
+
+    # Attempt to typecast the value string. We are looking for boolean values,
+    # integers, floats, and empty strings. Below is how each gets cast, but it
+    # is pretty logical and straightforward.
+    #
+    #  "true"  -->  true
+    #  "false" -->  false
+    #  ""      -->  nil
+    #  "42"    -->  42
+    #  "3.14"  -->  3.14
+    #  "foo"   -->  "foo"
+    #
+    # Returns the typecast value.
+    def typecast( value )
+      case value
+      when %r/\Atrue\z/i;  true
+      when %r/\Afalse\z/i; false
+      when %r/\A\s*\z/i;   nil
+      else
+        Integer(value) rescue \
+        Float(value)   rescue \
+        unescape_value(value)
+      end
     end
 
     # Unescape special characters found in the value string. This will convert
