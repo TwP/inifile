@@ -497,5 +497,10 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal '[value]', ini_file['section_one']['one']
     assert_equal '2', ini_file['section_one']['two']
   end
+
+  def test_unmatched_quotes
+    # missing a closing quote should raise an error
+    assert_raise(IniFile::Error) { IniFile.load 'test/data/bad_2.ini' }
+  end
 end
 

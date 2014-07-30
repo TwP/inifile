@@ -486,8 +486,13 @@ class IniFile
         end
       end
 
-      # check here if we have a dangling value ... means we have an unclosed
-      # continuation
+      # check here if we have a dangling value ... usually means we have an
+      # unmatched open quote
+      if leading_quote?
+        error "Unmatched open quote"
+      elsif !value.nil?
+        error
+      end
     end
 
     # Store the property/value pair in the currently active section. This
