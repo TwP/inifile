@@ -3,12 +3,11 @@ require 'strscan'
 
 # This class represents the INI file and can be used to parse, modify,
 # and write INI files.
-#
 class IniFile
   include Enumerable
 
   class Error < StandardError; end
-  VERSION = '2.0.2'
+  VERSION = '3.0.0'
 
   # Public: Open an INI file and load the contents.
   #
@@ -134,7 +133,6 @@ class IniFile
   alias :restore :read
 
   # Returns this IniFile converted to a String.
-  #
   def to_s
     s = []
     @ini.each do |section,hash|
@@ -146,7 +144,6 @@ class IniFile
   end
 
   # Returns this IniFile converted to a Hash.
-  #
   def to_h
     @ini.dup
   end
@@ -157,7 +154,6 @@ class IniFile
   # other - The other IniFile.
   #
   # Returns a new IniFile.
-  #
   def merge( other )
     self.dup.merge!(other)
   end
@@ -169,7 +165,6 @@ class IniFile
   # other - The other IniFile.
   #
   # Returns this IniFile.
-  #
   def merge!( other )
     my_keys = @ini.keys
     other_keys =
@@ -202,7 +197,6 @@ class IniFile
   #   end
   #
   # Returns this IniFile.
-  #
   def each
     return unless block_given?
     @ini.each do |section,hash|
@@ -225,7 +219,6 @@ class IniFile
   #   end
   #
   # Returns this IniFile.
-  #
   def each_section
     return unless block_given?
     @ini.each_key {|section| yield section}
@@ -237,7 +230,6 @@ class IniFile
   # section - The section name as a String.
   #
   # Returns the deleted section Hash.
-  #
   def delete_section( section )
     @ini.delete section.to_s
   end
@@ -253,7 +245,6 @@ class IniFile
   #   #=> global section Hash
   #
   # Returns the Hash of parameter/value pairs for this section.
-  #
   def []( section )
     return nil if section.nil?
     @ini[section.to_s]
@@ -270,7 +261,6 @@ class IniFile
   #   #=> { 'gritty' => 'yes' }
   #
   # Returns the value Hash.
-  #
   def []=( section, value )
     @ini[section.to_s] = value
   end
@@ -287,7 +277,6 @@ class IniFile
   #
   # Return a Hash containing only those sections that match the given regular
   # expression.
-  #
   def match( regex )
     @ini.dup.delete_if { |section, _| section !~ regex }
   end
@@ -297,13 +286,11 @@ class IniFile
   # section - The section name as a String.
   #
   # Returns true if the section exists in the IniFile.
-  #
   def has_section?( section )
     @ini.has_key? section.to_s
   end
 
   # Returns an Array of section names contained in this IniFile.
-  #
   def sections
     @ini.keys
   end
@@ -312,7 +299,6 @@ class IniFile
   # the object will raise an error.
   #
   # Returns this IniFile.
-  #
   def freeze
     super
     @ini.each_value {|h| h.freeze}
@@ -324,7 +310,6 @@ class IniFile
   # marking each as tainted.
   #
   # Returns this IniFile.
-  #
   def taint
     super
     @ini.each_value {|h| h.taint}
@@ -337,7 +322,6 @@ class IniFile
   # original. The tainted state of the original is copied to the duplicate.
   #
   # Returns a new IniFile.
-  #
   def dup
     other = super
     other.instance_variable_set(:@ini, Hash.new {|h,k| h[k] = Hash.new})
@@ -352,7 +336,6 @@ class IniFile
   # to the duplicate.
   #
   # Returns a new IniFile.
-  #
   def clone
     other = dup
     other.freeze if self.frozen?
@@ -366,7 +349,6 @@ class IniFile
   # other - The other IniFile.
   #
   # Returns true if the INI files are equivalent and false if they differ.
-  #
   def eql?( other )
     return true if equal? other
     return false unless other.instance_of? self.class
