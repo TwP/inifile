@@ -13,11 +13,11 @@ class TestIniFile < Test::Unit::TestCase
     @contents = [
       ['section_one', 'one', 1],
       ['section_one', 'two', 2],
-      ['section_two', 'three', 3],
+      ['section_two', 'three', -3],
       ['section_two', 'multi', "multiline support"],
-      ['section three', 'four', 4],
-      ['section three', 'five', 5],
-      ['section three', 'six', 6],
+      ['section three', 'four', true],
+      ['section three', 'five', false],
+      ['section three', 'six', 6.0],
       ['section_five', 'seven and eight', '7 & 8']
     ].sort
 
@@ -184,13 +184,13 @@ class TestIniFile < Test::Unit::TestCase
     }
     assert_equal expected, @ini_file[:section_one]
 
-    expected = {'three' => 3, 'multi' => "multiline support"}
+    expected = {'three' => -3, 'multi' => "multiline support"}
     assert_equal expected, @ini_file['section_two']
 
     expected = {
-      'four' => 4,
-      'five' => 5,
-      'six'  => 6,
+      'four' => true,
+      'five' => false,
+      'six'  => 6.0,
     }
     assert_equal expected, @ini_file['section three']
 
@@ -215,10 +215,10 @@ class TestIniFile < Test::Unit::TestCase
   def test_match
     expected = {
      "section_two" => {
-        "three" => 3, "multi" => "multiline support"
+        "three" => -3, "multi" => "multiline support"
       },
       "section three" => {
-        "four" => 4, "five"=> 5, "six" => 6
+        "four" => true, "five"=> false, "six" => 6.0
       }
     }
     assert_equal expected, @ini_file.match(/(two|three)/)
@@ -400,7 +400,7 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal 2, ini_file['section_one']['two']
 
     # make sure that the rest haven't changed
-    assert_equal 3, ini_file['section_two']['three']
+    assert_equal(-3, ini_file['section_two']['three'])
 
     # and that we got any additional sections too
     assert_equal 5, ini_file['section_five']['five']
@@ -418,7 +418,7 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal 2, ini_file['section_one']['two']
 
     # make sure that the rest haven't changed
-    assert_equal 3, ini_file['section_two']['three']
+    assert_equal(-3, ini_file['section_two']['three'])
 
     # and that we got any additional sections too
     assert_equal 5, ini_file['section_five']['five']
