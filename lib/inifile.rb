@@ -379,12 +379,24 @@ class IniFile
     self
   end
 
+  # The IniFile::Parser has the responsibility of reading the contents of an
+  # .ini file and storing that information into a ruby Hash. The object being
+  # parsed must respond to `each_line` - this includes Strings and any IO
+  # object.
   class Parser
 
     attr_writer :section
     attr_accessor :property
     attr_accessor :value
 
+    # Create a new IniFile::Parser that can be used to parse the contents of
+    # an .ini file.
+    #
+    # hash    - The Hash where parsed information will be stored
+    # param   - String used to separate parameter and value
+    # comment - String containing the comment character(s)
+    # default - The String name of the default global section
+    #
     def initialize( hash, param, comment, default )
       @hash = hash
       @default = default
@@ -402,10 +414,20 @@ class IniFile
       @normal_value    = %r/\A(.*?)#{comment}/
     end
 
+    # Returns `true` if the current value starts with a leading double quote.
+    # Otherwise returns false.
     def leading_quote?
       value && value =~ %r/\A"/
     end
 
+    # Given a string, attempt to parse out a value from that string. This
+    # value might be continued on the following line. So this method returns
+    # `true` if it is expecting more data.
+    #
+    # string - String to parse
+    #
+    # Returns `true` if the next line is also part of the current value.
+    # Returns `fase` if the string contained a complete value.
     def parse_value( string )
       continuation = false
 
@@ -455,6 +477,10 @@ class IniFile
 
     # Parse the ini file contents. This will clear any values currently stored
     # in the ini hash.
+    #
+    # content - Any object that responds to `each_line`
+    #
+    # Returns nil.
     def parse( content )
       return unless content
 
@@ -495,6 +521,8 @@ class IniFile
       elsif value
         error
       end
+
+      nil
     end
 
     # Store the property/value pair in the currently active section. This
