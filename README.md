@@ -135,6 +135,19 @@ sequences to appear literally in your value. For example:
 
     property = this is not a tab \\t character
 
+### Value Type Casting
+
+Some values will be type cast when parsed by the code. Those values are
+booleans, integers, floats, and empty strings are cast to `nil`.
+
+* ""  -->  nil
+* "42"  -->  42
+* "3.14159"  -->  3.14159
+* "true"  -->  true
+* "false"  -->  false
+* "normal string"  -->  "normal string"
+
+Pretty basic stuff.
 
 Install
 -------

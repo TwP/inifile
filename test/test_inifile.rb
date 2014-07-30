@@ -11,13 +11,13 @@ class TestIniFile < Test::Unit::TestCase
   def setup
     @ini_file = IniFile.new(:filename => 'test/data/good.ini')
     @contents = [
-      ['section_one', 'one', '1'],
-      ['section_one', 'two', '2'],
-      ['section_two', 'three', '3'],
+      ['section_one', 'one', 1],
+      ['section_one', 'two', 2],
+      ['section_two', 'three', -3],
       ['section_two', 'multi', "multiline support"],
-      ['section three', 'four', '4'],
-      ['section three', 'five', '5'],
-      ['section three', 'six', '6'],
+      ['section three', 'four', true],
+      ['section three', 'five', false],
+      ['section three', 'six', 6.0],
       ['section_five', 'seven and eight', '7 & 8']
     ].sort
 
@@ -84,7 +84,7 @@ class TestIniFile < Test::Unit::TestCase
   def test_delete_section
     assert_nil @ini_file.delete_section('section_nil')
 
-    h = {'one' => '1', 'two' => '2'}
+    h = {'one' => 1, 'two' => 2}
     assert_equal true, @ini_file.has_section?('section_one')
     assert_equal h, @ini_file.delete_section('section_one')
     assert_equal false, @ini_file.has_section?('section_one')
@@ -179,18 +179,18 @@ class TestIniFile < Test::Unit::TestCase
 
   def test_index
     expected = {
-      'one' => '1',
-      'two' => '2'
+      'one' => 1,
+      'two' => 2
     }
     assert_equal expected, @ini_file[:section_one]
 
-    expected = {'three' => '3', 'multi' => "multiline support"}
+    expected = {'three' => -3, 'multi' => "multiline support"}
     assert_equal expected, @ini_file['section_two']
 
     expected = {
-      'four' => '4',
-      'five' => '5',
-      'six'  => '6',
+      'four' => true,
+      'five' => false,
+      'six'  => 6.0,
     }
     assert_equal expected, @ini_file['section three']
 
@@ -214,13 +214,11 @@ class TestIniFile < Test::Unit::TestCase
 
   def test_match
     expected = {
-     "section_two" =>
-      {
-        "three"=>"3", "multi"=>"multiline support"
+     "section_two" => {
+        "three" => -3, "multi" => "multiline support"
       },
-     "section three" =>
-      {
-        "four"=>"4", "five"=>"5", "six"=>"6"
+      "section three" => {
+        "four" => true, "five"=> false, "six" => 6.0
       }
     }
     assert_equal expected, @ini_file.match(/(two|three)/)
@@ -245,8 +243,8 @@ class TestIniFile < Test::Unit::TestCase
 
     ini_file = IniFile.new(:filename => 'test/data/param.ini', :parameter => ':')
     assert ini_file.has_section?('section_one')
-    assert_equal '1', ini_file['section_one']['one']
-    assert_equal '2', ini_file['section_one']['two']
+    assert_equal 1, ini_file['section_one']['one']
+    assert_equal 2, ini_file['section_one']['two']
 
     # make sure we error out on files with bad lines
     assert_raise(IniFile::Error) {IniFile.new :filename => 'test/data/bad_1.ini'}
@@ -323,8 +321,8 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal 42, @ini_file['section_one']['two']
 
     @ini_file.read
-    assert_equal '1', @ini_file['section_one']['one']
-    assert_equal '2', @ini_file['section_one']['two']
+    assert_equal 1, @ini_file['section_one']['one']
+    assert_equal 2, @ini_file['section_one']['two']
 
     @ini_file.read(:filename => 'test/data/mixed_comment.ini')
     assert_equal false, @ini_file.has_section?('section_two')
@@ -392,41 +390,41 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal expected, multiple
 
     multiple = ini_file['empty_lines']
-    expected = {'empty' => '', 'not_empty' => 'full'}
+    expected = {'empty' => nil, 'not_empty' => 'full'}
     assert_equal expected, multiple
   end
 
   def test_merge
     ini_file = @ini_file.merge(IniFile.load("test/data/merge.ini"))
-    assert_equal '3', ini_file['section_one']['one']
-    assert_equal '2', ini_file['section_one']['two']
+    assert_equal 3, ini_file['section_one']['one']
+    assert_equal 2, ini_file['section_one']['two']
 
     # make sure that the rest haven't changed
-    assert_equal '3', ini_file['section_two']['three']
+    assert_equal(-3, ini_file['section_two']['three'])
 
     # and that we got any additional sections too
-    assert_equal '5', ini_file['section_five']['five']
+    assert_equal 5, ini_file['section_five']['five']
 
     # original object is unchanged
-    assert_equal '1', @ini_file['section_one']['one']
+    assert_equal 1, @ini_file['section_one']['one']
   end
 
   def test_merge_hash
     ini_file = @ini_file.merge({
-      'section_one'  => { 'one'  => '3' },
-      'section_five' => { 'five' => '5' }
+      'section_one'  => { 'one'  => 3 },
+      'section_five' => { 'five' => 5 }
     })
-    assert_equal '3', ini_file['section_one']['one']
-    assert_equal '2', ini_file['section_one']['two']
+    assert_equal 3, ini_file['section_one']['one']
+    assert_equal 2, ini_file['section_one']['two']
 
     # make sure that the rest haven't changed
-    assert_equal '3', ini_file['section_two']['three']
+    assert_equal(-3, ini_file['section_two']['three'])
 
     # and that we got any additional sections too
-    assert_equal '5', ini_file['section_five']['five']
+    assert_equal 5, ini_file['section_five']['five']
 
     # original object is unchanged
-    assert_equal '1', @ini_file['section_one']['one']
+    assert_equal 1, @ini_file['section_one']['one']
   end
 
   if RUBY_VERSION >= '1.9'
@@ -478,16 +476,16 @@ class TestIniFile < Test::Unit::TestCase
     ini_file = IniFile.load('test/data/global.ini')
 
     assert_equal %w[global], ini_file.sections
-    assert_equal '1', ini_file['global']['one']
-    assert_equal '2', ini_file['global']['two']
+    assert_equal 1, ini_file['global']['one']
+    assert_equal 2, ini_file['global']['two']
   end
 
   def test_default_global_section
     ini_file = IniFile.load('test/data/global.ini', :default => 'nonce')
 
     assert_equal %w[nonce], ini_file.sections
-    assert_equal '1', ini_file['nonce']['one']
-    assert_equal '2', ini_file['nonce']['two']
+    assert_equal 1, ini_file['nonce']['one']
+    assert_equal 2, ini_file['nonce']['two']
   end
 
   def test_unescaped_section_header_as_value
@@ -495,7 +493,7 @@ class TestIniFile < Test::Unit::TestCase
 
     assert_equal %w[section_one], ini_file.sections
     assert_equal '[value]', ini_file['section_one']['one']
-    assert_equal '2', ini_file['section_one']['two']
+    assert_equal 2, ini_file['section_one']['two']
   end
 
   def test_unmatched_quotes
@@ -506,8 +504,8 @@ class TestIniFile < Test::Unit::TestCase
   def test_continuation_at_end_of_file
     ini_file = IniFile.load('test/data/continuation.ini')
 
-    assert_equal '1', ini_file['section_one']['one']
-    assert_equal '2', ini_file['section_one']['two']
+    assert_equal 1, ini_file['section_one']['one']
+    assert_equal 2, ini_file['section_one']['two']
 
     assert_equal 'here is the last value', ini_file['section_two']['end-of-file']
   end
@@ -515,8 +513,8 @@ class TestIniFile < Test::Unit::TestCase
   def test_empty_comment_string
     ini_file = IniFile.load('test/data/merge.ini', :comment => nil)
 
-    assert_equal '3', ini_file['section_one']['one']
-    assert_equal '5', ini_file['section_five']['five']
+    assert_equal 3, ini_file['section_one']['one']
+    assert_equal 5, ini_file['section_five']['five']
   end
 end
 
