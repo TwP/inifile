@@ -511,5 +511,12 @@ class TestIniFile < Test::Unit::TestCase
 
     assert_equal 'here is the last value', ini_file['section_two']['end-of-file']
   end
+
+  def test_empty_comment_string
+    ini_file = IniFile.load('test/data/merge.ini', :comment => nil)
+
+    assert_equal '3', ini_file['section_one']['one']
+    assert_equal '5', ini_file['section_five']['five']
+  end
 end
 
