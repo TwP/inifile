@@ -121,19 +121,17 @@ class IniFile
   #
   # opts - The default options Hash
   #        :filename - The filename as a String
-  #        :encoding - The encoding as a String (Ruby 1.9)
+  #        :encoding - The encoding as a String
   #
   # Returns this IniFile instance if the read was successful; nil is returned
   # if the file could not be read.
-  #
   def read( opts = {} )
     filename = opts.fetch(:filename, @filename)
     encoding = opts.fetch(:encoding, @encoding)
     return unless File.file? filename
 
-    mode = (RUBY_VERSION >= '1.9' && encoding) ?
-           "r:#{encoding.to_s}" : 'r'
-    File.open(filename, mode) { |fd| parse(fd.read) }
+    mode = encoding ? "r:#{encoding}" : "r"
+    File.open(filename, mode) { |fd| parse fd }
     self
   end
   alias :restore :read
