@@ -3,12 +3,11 @@ require 'strscan'
 
 # This class represents the INI file and can be used to parse, modify,
 # and write INI files.
-#
 class IniFile
   include Enumerable
 
   class Error < StandardError; end
-  VERSION = '2.0.2'
+  VERSION = '3.0.0'
 
   # Public: Open an INI file and load the contents.
   #
@@ -17,7 +16,6 @@ class IniFile
   #            :comment   - String containing the comment character(s)
   #            :parameter - String used to separate parameter and value
   #            :encoding  - Encoding String for reading / writing (Ruby 1.9)
-  #            :escape    - Boolean used to control character escaping
   #            :default   - The String name of the default global section
   #
   # Examples
@@ -41,9 +39,6 @@ class IniFile
   # Get and set the encoding (Ruby 1.9)
   attr_accessor :encoding
 
-  # Enable or disable character escaping
-  attr_accessor :escape
-
   # Public: Create a new INI file from the given content String which
   # contains the INI file lines. If the content are omitted, then the
   # :filename option is used to read in the content of the INI file. If
@@ -55,7 +50,6 @@ class IniFile
   #           :comment   - String containing the comment character(s)
   #           :parameter - String used to separate parameter and value
   #           :encoding  - Encoding String for reading / writing (Ruby 1.9)
-  #           :escape    - Boolean used to control character escaping
   #           :default   - The String name of the default global section
   #           :filename  - The filename as a String
   #
@@ -76,18 +70,15 @@ class IniFile
   def initialize( content = nil, opts = {} )
     opts, content = content, nil if Hash === content
 
-    @content = content
-
     @comment  = opts.fetch(:comment, ';#')
     @param    = opts.fetch(:parameter, '=')
     @encoding = opts.fetch(:encoding, nil)
-    @escape   = opts.fetch(:escape, true)
     @default  = opts.fetch(:default, 'global')
     @filename = opts.fetch(:filename, nil)
 
     @ini = Hash.new {|h,k| h[k] = Hash.new}
 
-    if    @content  then parse!
+    if    content   then parse(content)
     elsif @filename then read
     end
   end
@@ -98,16 +89,13 @@ class IniFile
   #
   # opts - The default options Hash
   #        :filename - The filename as a String
-  #        :encoding - The encoding as a String (Ruby 1.9)
+  #        :encoding - The encoding as a String
   #
   # Returns this IniFile instance.
-  #
   def write( opts = {} )
     filename = opts.fetch(:filename, @filename)
     encoding = opts.fetch(:encoding, @encoding)
-    mode = (RUBY_VERSION >= '1.9' && encoding) ?
-         "w:#{encoding.to_s}" :
-         'w'
+    mode = encoding ? "w:#{encoding}" : "w"
 
     File.open(filename, mode) do |f|
       @ini.each do |section,hash|
@@ -129,31 +117,22 @@ class IniFile
   #
   # opts - The default options Hash
   #        :filename - The filename as a String
-  #        :encoding - The encoding as a String (Ruby 1.9)
+  #        :encoding - The encoding as a String
   #
   # Returns this IniFile instance if the read was successful; nil is returned
   # if the file could not be read.
-  #
   def read( opts = {} )
     filename = opts.fetch(:filename, @filename)
     encoding = opts.fetch(:encoding, @encoding)
     return unless File.file? filename
 
-    mode = (RUBY_VERSION >= '1.9' && encoding) ?
-           "r:#{encoding.to_s}" :
-           'r'
-    fd = File.open(filename, mode)
-    @content = fd.read
-
-    parse!
+    mode = encoding ? "r:#{encoding}" : "r"
+    File.open(filename, mode) { |fd| parse fd }
     self
-  ensure
-    fd.close if fd && !fd.closed?
   end
   alias :restore :read
 
   # Returns this IniFile converted to a String.
-  #
   def to_s
     s = []
     @ini.each do |section,hash|
@@ -165,7 +144,6 @@ class IniFile
   end
 
   # Returns this IniFile converted to a Hash.
-  #
   def to_h
     @ini.dup
   end
@@ -176,7 +154,6 @@ class IniFile
   # other - The other IniFile.
   #
   # Returns a new IniFile.
-  #
   def merge( other )
     self.dup.merge!(other)
   end
@@ -188,7 +165,6 @@ class IniFile
   # other - The other IniFile.
   #
   # Returns this IniFile.
-  #
   def merge!( other )
     my_keys = @ini.keys
     other_keys =
@@ -221,7 +197,6 @@ class IniFile
   #   end
   #
   # Returns this IniFile.
-  #
   def each
     return unless block_given?
     @ini.each do |section,hash|
@@ -244,7 +219,6 @@ class IniFile
   #   end
   #
   # Returns this IniFile.
-  #
   def each_section
     return unless block_given?
     @ini.each_key {|section| yield section}
@@ -256,7 +230,6 @@ class IniFile
   # section - The section name as a String.
   #
   # Returns the deleted section Hash.
-  #
   def delete_section( section )
     @ini.delete section.to_s
   end
@@ -272,7 +245,6 @@ class IniFile
   #   #=> global section Hash
   #
   # Returns the Hash of parameter/value pairs for this section.
-  #
   def []( section )
     return nil if section.nil?
     @ini[section.to_s]
@@ -289,7 +261,6 @@ class IniFile
   #   #=> { 'gritty' => 'yes' }
   #
   # Returns the value Hash.
-  #
   def []=( section, value )
     @ini[section.to_s] = value
   end
@@ -306,7 +277,6 @@ class IniFile
   #
   # Return a Hash containing only those sections that match the given regular
   # expression.
-  #
   def match( regex )
     @ini.dup.delete_if { |section, _| section !~ regex }
   end
@@ -316,13 +286,11 @@ class IniFile
   # section - The section name as a String.
   #
   # Returns true if the section exists in the IniFile.
-  #
   def has_section?( section )
     @ini.has_key? section.to_s
   end
 
   # Returns an Array of section names contained in this IniFile.
-  #
   def sections
     @ini.keys
   end
@@ -331,7 +299,6 @@ class IniFile
   # the object will raise an error.
   #
   # Returns this IniFile.
-  #
   def freeze
     super
     @ini.each_value {|h| h.freeze}
@@ -343,7 +310,6 @@ class IniFile
   # marking each as tainted.
   #
   # Returns this IniFile.
-  #
   def taint
     super
     @ini.each_value {|h| h.taint}
@@ -356,7 +322,6 @@ class IniFile
   # original. The tainted state of the original is copied to the duplicate.
   #
   # Returns a new IniFile.
-  #
   def dup
     other = super
     other.instance_variable_set(:@ini, Hash.new {|h,k| h[k] = Hash.new})
@@ -371,7 +336,6 @@ class IniFile
   # to the duplicate.
   #
   # Returns a new IniFile.
-  #
   def clone
     other = dup
     other.freeze if self.frozen?
@@ -385,7 +349,6 @@ class IniFile
   # other - The other IniFile.
   #
   # Returns true if the INI files are equivalent and false if they differ.
-  #
   def eql?( other )
     return true if equal? other
     return false unless other.instance_of? self.class
@@ -393,156 +356,12 @@ class IniFile
   end
   alias :== :eql?
 
-
-private
-
-  # Parse the ini file contents. This will clear any values currently stored
-  # in the ini hash.
-  #
-  def parse!
-    return unless @content
-
-    string = ''
-    property = ''
-
-    @ini.clear
-    @_line = nil
-    @_section = nil
-
-    scanner = StringScanner.new(@content)
-    until scanner.eos?
-
-      # keep track of the current line for error messages
-      if scanner.bol?
-        @_line = scanner.check(%r/\A.*$/)
-
-        # look for the start of a new section only when we are
-        # at the beginning of a line
-        if scanner.scan(%r/\A\s*\[([^\]]+)\]/)
-          @_section = @ini[scanner[1]]
-        end
-      end
-
-      # look for escaped special characters \# \" etc
-      if scanner.scan(%r/\\([\[\]#{@param}#{@comment}"])/)
-        string << scanner[1]
-
-      # look for quoted strings
-      elsif scanner.scan(%r/"/)
-        quote = scanner.scan_until(/(?:\A|[^\\])"/)
-        parse_error('Unmatched quote') if quote.nil?
-
-        quote.chomp!('"')
-        string << quote
-
-      # look for comments, empty strings, end of lines
-      elsif scanner.skip(%r/\A\s*(?:[#{@comment}].*)?$/)
-        string << scanner.getch unless scanner.eos?
-
-        process_property(property, string)
-
-      # look for the separator between property name and value
-      elsif scanner.scan(%r/#{@param}/)
-        if property.empty?
-          property = string.strip
-          string.slice!(0, string.length)
-        else
-          parse_error
-        end
-
-      # otherwise scan and store characters till we hit the start of some
-      # special section like a quote, newline, comment, etc.
-      else
-        tmp = scanner.scan_until(%r/([\n"#{@param}#{@comment}] | \z | \\[\[\]#{@param}#{@comment}"])/mx)
-        parse_error if tmp.nil?
-
-        len = scanner[1].length
-        tmp.slice!(tmp.length - len, len)
-
-        scanner.pos = scanner.pos - len
-        string << tmp
-      end
-    end
-
-    process_property(property, string)
-  end
-
-  # Store the property/value pair in the currently active section. This
-  # method checks for continuation of the value to the next line.
-  #
-  # property - The property name as a String.
-  # value    - The property value as a String.
-  #
-  # Returns nil.
-  #
-  def process_property( property, value )
-    value.chomp!
-    return if property.empty? and value.empty?
-    return if value.sub!(%r/\\\s*\z/, '')
-
-    property.strip!
-    value.strip!
-
-    parse_error if property.empty?
-
-    current_section[property.dup] = unescape_value(value.dup)
-
-    property.slice!(0, property.length)
-    value.slice!(0, value.length)
-
-    nil
-  end
-
-  # Returns the current section Hash.
-  #
-  def current_section
-    @_section ||= @ini[@default]
-  end
-
-  # Raise a parse error using the given message and appending the current line
-  # being parsed.
-  #
-  # msg - The message String to use.
-  #
-  # Raises IniFile::Error
-  #
-  def parse_error( msg = 'Could not parse line' )
-    raise Error, "#{msg}: #{@_line.inspect}"
-  end
-
-  # Unescape special characters found in the value string. This will convert
-  # escaped null, tab, carriage return, newline, and backslash into their
-  # literal equivalents.
-  #
-  # value - The String value to unescape.
-  #
-  # Returns the unescaped value.
-  #
-  def unescape_value( value )
-    return value unless @escape
-
-    value = value.to_s
-    value.gsub!(%r/\\[0nrt\\]/) { |char|
-      case char
-      when '\0';   "\0"
-      when '\n';   "\n"
-      when '\r';   "\r"
-      when '\t';   "\t"
-      when '\\\\'; "\\"
-      end
-    }
-    value
-  end
-
   # Escape special characters.
   #
   # value - The String value to escape.
   #
   # Returns the escaped value.
-  #
   def escape_value( value )
-    return value unless @escape
-
     value = value.to_s.dup
     value.gsub!(%r/\\([0nrt])/, '\\\\\1')
     value.gsub!(%r/\n/, '\n')
@@ -550,6 +369,213 @@ private
     value.gsub!(%r/\t/, '\t')
     value.gsub!(%r/\0/, '\0')
     value
+  end
+
+  #
+  #
+  def parse( content )
+    parser = Parser.new(@ini, @param, @comment, @default)
+    parser.parse(content)
+    self
+  end
+
+  # The IniFile::Parser has the responsibility of reading the contents of an
+  # .ini file and storing that information into a ruby Hash. The object being
+  # parsed must respond to `each_line` - this includes Strings and any IO
+  # object.
+  class Parser
+
+    attr_writer :section
+    attr_accessor :property
+    attr_accessor :value
+
+    # Create a new IniFile::Parser that can be used to parse the contents of
+    # an .ini file.
+    #
+    # hash    - The Hash where parsed information will be stored
+    # param   - String used to separate parameter and value
+    # comment - String containing the comment character(s)
+    # default - The String name of the default global section
+    #
+    def initialize( hash, param, comment, default )
+      @hash = hash
+      @default = default
+
+      comment = comment.to_s.empty? ? "\\z" : "\\s*(?:[#{comment}].*)?\\z"
+
+      @section_regexp  = %r/\A\s*\[([^\]]+)\]#{comment}/
+      @ignore_regexp   = %r/\A#{comment}/
+      @property_regexp = %r/\A(.*?)(?<!\\)#{param}(.*)\z/
+
+      @open_quote      = %r/\A\s*(".*)\z/
+      @close_quote     = %r/\A(.*(?<!\\)")#{comment}/
+      @full_quote      = %r/\A\s*(".*(?<!\\)")#{comment}/
+      @trailing_slash  = %r/\A(.*)(?<!\\)\\#{comment}/
+      @normal_value    = %r/\A(.*?)#{comment}/
+    end
+
+    # Returns `true` if the current value starts with a leading double quote.
+    # Otherwise returns false.
+    def leading_quote?
+      value && value =~ %r/\A"/
+    end
+
+    # Given a string, attempt to parse out a value from that string. This
+    # value might be continued on the following line. So this method returns
+    # `true` if it is expecting more data.
+    #
+    # string - String to parse
+    #
+    # Returns `true` if the next line is also part of the current value.
+    # Returns `fase` if the string contained a complete value.
+    def parse_value( string )
+      continuation = false
+
+      # if our value starts with a double quote, then we are in a
+      # line continuation situation
+      if leading_quote?
+        # check for a closing quote at the end of the string
+        if string =~ @close_quote
+          value << $1
+
+        # otherwise just append the string to the value
+        else
+          value << string
+          continuation = true
+        end
+
+      # not currently processing a continuation line
+      else
+        case string
+        when @full_quote
+          self.value = $1
+
+        when @open_quote
+          self.value = $1
+          continuation = true
+
+        when @trailing_slash
+          self.value ?  self.value << $1 : self.value = $1
+          continuation = true
+
+        when @normal_value
+          self.value ?  self.value << $1 : self.value = $1
+
+        else
+          error
+        end
+      end
+
+      if continuation
+        self.value << $/ if leading_quote?
+      else
+        process_property
+      end
+
+      continuation
+    end
+
+    # Parse the ini file contents. This will clear any values currently stored
+    # in the ini hash.
+    #
+    # content - Any object that responds to `each_line`
+    #
+    # Returns nil.
+    def parse( content )
+      return unless content
+
+      continuation = false
+
+      @hash.clear
+      @line = nil
+      self.section = nil
+
+      content.each_line do |line|
+        @line = line.chomp
+
+        if continuation
+          continuation = parse_value @line
+        else
+          case @line
+          when @ignore_regexp
+            nil
+          when @section_regexp
+            self.section = @hash[$1]
+          when @property_regexp
+            self.property = $1.strip
+            error if property.empty?
+
+            continuation = parse_value $2
+          else
+            error
+          end
+        end
+      end
+
+      # check here if we have a dangling value ... usually means we have an
+      # unmatched open quote
+      if leading_quote?
+        error "Unmatched open quote"
+      elsif property && value
+        process_property
+      elsif value
+        error
+      end
+
+      nil
+    end
+
+    # Store the property/value pair in the currently active section. This
+    # method checks for continuation of the value to the next line.
+    #
+    # Returns nil.
+    def process_property
+      property.strip!
+      value.strip!
+
+      self.value = $1 if value =~ %r/\A"(.*)(?<!\\)"\z/m
+
+      section[property] = unescape_value(value)
+
+      self.property = nil
+      self.value = nil
+    end
+
+    # Returns the current section Hash.
+    def section
+      @section ||= @hash[@default]
+    end
+
+    # Raise a parse error using the given message and appending the current line
+    # being parsed.
+    #
+    # msg - The message String to use.
+    #
+    # Raises IniFile::Error
+    def error( msg = 'Could not parse line' )
+      raise Error, "#{msg}: #{@line.inspect}"
+    end
+
+    # Unescape special characters found in the value string. This will convert
+    # escaped null, tab, carriage return, newline, and backslash into their
+    # literal equivalents.
+    #
+    # value - The String value to unescape.
+    #
+    # Returns the unescaped value.
+    def unescape_value( value )
+      value = value.to_s
+      value.gsub!(%r/\\[0nrt\\]/) { |char|
+        case char
+        when '\0';   "\0"
+        when '\n';   "\n"
+        when '\r';   "\r"
+        when '\t';   "\t"
+        when '\\\\'; "\\"
+        end
+      }
+      value
+    end
   end
 
 end  # IniFile

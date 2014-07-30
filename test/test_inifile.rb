@@ -461,16 +461,17 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal %Q{Escaping works\tinside quoted strings!}, escaped['quoted']
   end
 
+  # disabling escaping is no longer supported
   def test_value_escaping_disabled
     ini_file = IniFile.load('test/data/escape.ini', :escape => false)
     escaped = ini_file['escaped']
 
-    assert_equal %q{There is a tab\tcharacter in here somewhere}, escaped['tabs']
-    assert_equal %q{Who uses these anyways?\r}, escaped['carriage return']
-    assert_equal %q{Trust newline!\nAlways there when you need him.\nSplittin' those lines.}, escaped['newline']
-    assert_equal %Q{Who'd be silly enough to put\\0 a null character in the middle of a string? Stroustrup would not approve!}, escaped['null']
-    assert_equal %q{This string \\\\t contains \\\\n no \\\\r special \\\\0 characters!}, escaped['backslash']
-    assert_equal %q{Escaping works\tinside quoted strings!}, escaped['quoted']
+    assert_equal %Q{There is a tab\tcharacter in here somewhere}, escaped['tabs']
+    assert_equal %Q{Who uses these anyways?\r}, escaped['carriage return']
+    assert_equal %Q{Trust newline!\nAlways there when you need him.\nSplittin' those lines.}, escaped['newline']
+    assert_equal %Q{Who'd be silly enough to put\0 a null character in the middle of a string? Stroustrup would not approve!}, escaped['null']
+    assert_equal %q{This string \t contains \n no \r special \0 characters!}, escaped['backslash']
+    assert_equal %Q{Escaping works\tinside quoted strings!}, escaped['quoted']
   end
 
   def test_global_section
@@ -495,6 +496,27 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal %w[section_one], ini_file.sections
     assert_equal '[value]', ini_file['section_one']['one']
     assert_equal '2', ini_file['section_one']['two']
+  end
+
+  def test_unmatched_quotes
+    # missing a closing quote should raise an error
+    assert_raise(IniFile::Error) { IniFile.load 'test/data/bad_2.ini' }
+  end
+
+  def test_continuation_at_end_of_file
+    ini_file = IniFile.load('test/data/continuation.ini')
+
+    assert_equal '1', ini_file['section_one']['one']
+    assert_equal '2', ini_file['section_one']['two']
+
+    assert_equal 'here is the last value', ini_file['section_two']['end-of-file']
+  end
+
+  def test_empty_comment_string
+    ini_file = IniFile.load('test/data/merge.ini', :comment => nil)
+
+    assert_equal '3', ini_file['section_one']['one']
+    assert_equal '5', ini_file['section_five']['five']
   end
 end
 
