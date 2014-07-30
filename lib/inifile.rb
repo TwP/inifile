@@ -490,7 +490,9 @@ class IniFile
       # unmatched open quote
       if leading_quote?
         error "Unmatched open quote"
-      elsif !value.nil?
+      elsif property && value
+        process_property
+      elsif value
         error
       end
     end

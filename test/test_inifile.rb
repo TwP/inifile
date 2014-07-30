@@ -502,5 +502,14 @@ class TestIniFile < Test::Unit::TestCase
     # missing a closing quote should raise an error
     assert_raise(IniFile::Error) { IniFile.load 'test/data/bad_2.ini' }
   end
+
+  def test_continuation_at_end_of_file
+    ini_file = IniFile.load('test/data/continuation.ini')
+
+    assert_equal '1', ini_file['section_one']['one']
+    assert_equal '2', ini_file['section_one']['two']
+
+    assert_equal 'here is the last value', ini_file['section_two']['end-of-file']
+  end
 end
 
