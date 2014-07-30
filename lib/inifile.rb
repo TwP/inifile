@@ -90,16 +90,13 @@ class IniFile
   #
   # opts - The default options Hash
   #        :filename - The filename as a String
-  #        :encoding - The encoding as a String (Ruby 1.9)
+  #        :encoding - The encoding as a String
   #
   # Returns this IniFile instance.
-  #
   def write( opts = {} )
     filename = opts.fetch(:filename, @filename)
     encoding = opts.fetch(:encoding, @encoding)
-    mode = (RUBY_VERSION >= '1.9' && encoding) ?
-         "w:#{encoding.to_s}" :
-         'w'
+    mode = encoding ? "w:#{encoding}" : "w"
 
     File.open(filename, mode) do |f|
       @ini.each do |section,hash|
