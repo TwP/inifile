@@ -180,7 +180,7 @@ License
 -------
 
 MIT License
-Copyright (c) 2006 - 2012
+Copyright (c) 2006 - 2014
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
