@@ -1,5 +1,4 @@
 #encoding: UTF-8
-require 'strscan'
 
 # This class represents the INI file and can be used to parse, modify,
 # and write INI files.
@@ -371,8 +370,13 @@ class IniFile
     value
   end
 
+  # Parse the given content and store the information in this IniFile
+  # instance. All data will be cleared out and replaced with the information
+  # read from the content.
   #
+  # content - A String or a file descriptor (must respond to `each_line`)
   #
+  # Returns this IniFile.
   def parse( content )
     parser = Parser.new(@ini, @param, @comment, @default)
     parser.parse(content)
