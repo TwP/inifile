@@ -10,6 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["tim.pease@gmail.com"]
   spec.summary       = %q{INI file reader and writer}
   spec.description   = %q{INI file reader and writer}
+  spec.description   = %q{IniFile is a pure ruby gem that can read and write most INI file formats}
   spec.homepage      = "https://rubygems.org/gems/inifile"
   spec.license       = "MIT"
 
@@ -18,6 +19,6 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.add_development_dependency "bones"
-  spec.add_development_dependency "bones-git"
+  spec.add_development_dependency "bones",      "~> 3.8"
+  spec.add_development_dependency "bones-git",  "~> 1.3"
 end
