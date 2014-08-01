@@ -77,8 +77,11 @@ class IniFile
 
     @ini = Hash.new {|h,k| h[k] = Hash.new}
 
-    if    content   then parse(content)
-    elsif @filename then read
+    content = opts.fetch(:content, nil) if content.nil?
+
+    if    content.is_a?(Hash) then merge!(content)
+    elsif content             then parse(content)
+    elsif @filename           then read
     end
   end
 
@@ -165,19 +168,38 @@ class IniFile
   #
   # Returns this IniFile.
   def merge!( other )
+    return self if other.nil?
+
     my_keys = @ini.keys
-    other_keys =
-        case other
-        when IniFile; other.instance_variable_get(:@ini).keys
-        when Hash; other.keys
-        else raise "cannot merge contents from '#{other.class.name}'" end
+    other_keys = case other
+      when IniFile
+        other.instance_variable_get(:@ini).keys
+      when Hash
+        other.keys
+      else
+        raise Error, "cannot merge contents from '#{other.class.name}'"
+      end
 
     (my_keys & other_keys).each do |key|
-      @ini[key].merge!(other[key])
+      case other[key]
+      when Hash
+        @ini[key].merge!(other[key])
+      when nil
+        nil
+      else
+        raise Error, "cannot merge section #{key.inspect} - unsupported type: #{other[key].class.name}"
+      end
     end
 
     (other_keys - my_keys).each do |key|
-      @ini[key] = other[key]
+      @ini[key] = case other[key]
+        when Hash
+          other[key].dup
+        when nil
+          {}
+        else
+          raise Error, "cannot merge section #{key.inspect} - unsupported type: #{other[key].class.name}"
+        end
     end
 
     self
