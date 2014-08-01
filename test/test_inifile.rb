@@ -456,6 +456,20 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal 1, @ini_file['section_one']['one']
   end
 
+  def test_merge_invalid_hash
+    bad_hash = { 'section_one' => [1, 2, 3, 4] }
+    assert_raise(IniFile::Error) { @ini_file.merge(bad_hash) }
+
+    bad_hash = { 'foo' => 'bar' }
+    assert_raise(IniFile::Error) { @ini_file.merge(bad_hash) }
+
+    not_a_hash = [['section_one', ['foo','bar'], ['baz', 'buz']]]
+    assert_raise(IniFile::Error) { @ini_file.merge(not_a_hash) }
+
+    ini_file = @ini_file.merge nil
+    assert ini_file.eql?(@ini_file)
+  end
+
   if RUBY_VERSION >= '1.9'
     def test_parse_encoding
       ini_file = IniFile.new(:filename => "test/data/browscap.ini", :encoding => 'ISO-8859-1')
