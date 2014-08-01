@@ -14,7 +14,7 @@ class IniFile
   # opts     - The Hash of options (default: {})
   #            :comment   - String containing the comment character(s)
   #            :parameter - String used to separate parameter and value
-  #            :encoding  - Encoding String for reading / writing (Ruby 1.9)
+  #            :encoding  - Encoding String for reading / writing
   #            :default   - The String name of the default global section
   #
   # Examples
@@ -26,7 +26,6 @@ class IniFile
   #   #=> nil
   #
   # Returns an IniFile instance or nil if the file could not be opened.
-  #
   def self.load( filename, opts = {} )
     return unless File.file? filename
     new(opts.merge(:filename => filename))
@@ -35,49 +34,46 @@ class IniFile
   # Get and set the filename
   attr_accessor :filename
 
-  # Get and set the encoding (Ruby 1.9)
+  # Get and set the encoding
   attr_accessor :encoding
 
-  # Public: Create a new INI file from the given content String which
-  # contains the INI file lines. If the content are omitted, then the
-  # :filename option is used to read in the content of the INI file. If
-  # neither the content for a filename is provided then an empty INI file is
-  # created.
+  # Public: Create a new INI file from the given set of options. If :content
+  # is provided then it will be used to populate the INI file. If a :filename
+  # is provided then the contents of the file will be parsed and stored in the
+  # INI file. If neither the :content or :filename is provided then an empty
+  # INI file is created.
   #
-  # content - The String containing the INI file contents
-  # opts    - The Hash of options (default: {})
-  #           :comment   - String containing the comment character(s)
-  #           :parameter - String used to separate parameter and value
-  #           :encoding  - Encoding String for reading / writing (Ruby 1.9)
-  #           :default   - The String name of the default global section
-  #           :filename  - The filename as a String
+  # opts - The Hash of options (default: {})
+  #   :content   - The String/Hash containing the INI contents
+  #   :comment   - String containing the comment character(s)
+  #   :parameter - String used to separate parameter and value
+  #   :encoding  - Encoding String for reading / writing
+  #   :default   - The String name of the default global section
+  #   :filename  - The filename as a String
   #
   # Examples
   #
   #   IniFile.new
   #   #=> an empty IniFile instance
   #
-  #   IniFile.new( "[global]\nfoo=bar" )
+  #   IniFile.new( :content => "[global]\nfoo=bar" )
   #   #=> an IniFile instance
   #
   #   IniFile.new( :filename => 'file.ini', :encoding => 'UTF-8' )
   #   #=> an IniFile instance
   #
-  #   IniFile.new( "[global]\nfoo=bar", :comment => '#' )
+  #   IniFile.new( :content => "[global]\nfoo=bar", :comment => '#' )
   #   #=> an IniFile instance
   #
-  def initialize( content = nil, opts = {} )
-    opts, content = content, nil if Hash === content
-
+  def initialize( opts = {} )
     @comment  = opts.fetch(:comment, ';#')
     @param    = opts.fetch(:parameter, '=')
     @encoding = opts.fetch(:encoding, nil)
     @default  = opts.fetch(:default, 'global')
     @filename = opts.fetch(:filename, nil)
+    content   = opts.fetch(:content, nil)
 
     @ini = Hash.new {|h,k| h[k] = Hash.new}
-
-    content = opts.fetch(:content, nil) if content.nil?
 
     if    content.is_a?(Hash) then merge!(content)
     elsif content             then parse(content)

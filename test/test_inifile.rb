@@ -148,7 +148,7 @@ class TestIniFile < Test::Unit::TestCase
     assert @ini_file.eql?(@ini_file)
     assert @ini_file.eql?(@ini_file.clone)
     assert !@ini_file.eql?('string')
-    assert !@ini_file.eql?(IniFile.new(''))
+    assert !@ini_file.eql?(IniFile.new(:content => ''))
   end
 
   def test_freeze
@@ -252,7 +252,7 @@ class TestIniFile < Test::Unit::TestCase
 
   def test_initialize_from_string_without_ending_newline
     content = "[section_one]\n  foo=bar"
-    ini_file = IniFile.new(content)
+    ini_file = IniFile.new(:content => content)
     assert ini_file.has_section?('section_one')
     assert_equal 'bar', ini_file['section_one']['foo']
   end
@@ -260,7 +260,7 @@ class TestIniFile < Test::Unit::TestCase
   def test_initialize_from_string
     content = File.read('test/data/good.ini')
 
-    ini_file = IniFile.new(content, :comment => ';')
+    ini_file = IniFile.new(:content => content, :comment => ';')
     assert ini_file.has_section?('section_one')
     assert ini_file.has_section?('section_two')
     assert ini_file.has_section?('section three')
@@ -470,24 +470,22 @@ class TestIniFile < Test::Unit::TestCase
     assert ini_file.eql?(@ini_file)
   end
 
-  if RUBY_VERSION >= '1.9'
-    def test_parse_encoding
-      ini_file = IniFile.new(:filename => "test/data/browscap.ini", :encoding => 'ISO-8859-1')
-      assert_equal ini_file['www.substancia.com AutoHTTPAgent (ver *)']['Browser'], "Subst\xE2ncia".force_encoding('ISO-8859-1')
-    end
+  def test_parse_encoding
+    ini_file = IniFile.new(:filename => "test/data/browscap.ini", :encoding => 'ISO-8859-1')
+    assert_equal ini_file['www.substancia.com AutoHTTPAgent (ver *)']['Browser'], "Subst\xE2ncia".force_encoding('ISO-8859-1')
+  end
 
-    def test_write_encoding
-      tmp = 'test/data/tmp.ini'
-      File.delete tmp if Kernel.test(?f, tmp)
+  def test_write_encoding
+    tmp = 'test/data/tmp.ini'
+    File.delete tmp if Kernel.test(?f, tmp)
 
-      @ini_file = IniFile.new(:filename => tmp, :encoding => 'UTF-8')
-      @ini_file['testutf-8'] = {"utf-8" => "appr\u20accier"}
+    @ini_file = IniFile.new(:filename => tmp, :encoding => 'UTF-8')
+    @ini_file['testutf-8'] = {"utf-8" => "appr\u20accier"}
 
-      @ini_file.save(:filename => tmp)
+    @ini_file.save(:filename => tmp)
 
-      test = File.open(tmp)
-      assert_equal test.external_encoding.to_s, 'UTF-8'
-    end
+    test = File.open(tmp)
+    assert_equal test.external_encoding.to_s, 'UTF-8'
   end
 
   def test_value_escaping
