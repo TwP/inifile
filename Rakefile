@@ -20,5 +20,5 @@ Bones {
   version      IniFile::VERSION
 
   use_gmail
-  depend_on    'bones-git', :development => true
+  depend_on    'bones-git', "~> 1.3", :development => true
 }
