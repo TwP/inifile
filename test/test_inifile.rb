@@ -270,6 +270,35 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal '7 & 8', ini_file['section_five']['seven and eight']
   end
 
+  def test_initialize_from_hash
+    hash = {
+      'section one' => {
+        'foo' => 'bar',
+        'baz' => 'buz'
+      },
+      'colors' => {
+        'perrywinkle' => '7e6ff3',
+        'steelblue' => '4682b4'
+      },
+      'empty' => nil
+    }
+
+    ini_file = IniFile.new(:content => hash)
+    assert ini_file.has_section?('section one')
+    assert ini_file.has_section?('colors')
+    assert ini_file.has_section?('empty')
+
+    assert_equal %w[baz foo], ini_file['section one'].keys.sort
+    assert_equal 'bar', ini_file['section one']['foo']
+    assert_equal 'buz', ini_file['section one']['baz']
+
+    assert_equal %w[perrywinkle steelblue], ini_file['colors'].keys.sort
+    assert_equal '7e6ff3', ini_file['colors']['perrywinkle']
+    assert_equal '4682b4', ini_file['colors']['steelblue']
+
+    assert_empty ini_file['empty']
+  end
+
   def test_sections
     expected = [
       'section_one', 'section_two', 'section three',

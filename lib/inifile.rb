@@ -77,8 +77,11 @@ class IniFile
 
     @ini = Hash.new {|h,k| h[k] = Hash.new}
 
-    if    content   then parse(content)
-    elsif @filename then read
+    content = opts.fetch(:content, nil) if content.nil?
+
+    if    content.is_a?(Hash) then merge!(content)
+    elsif content             then parse(content)
+    elsif @filename           then read
     end
   end
 
@@ -177,7 +180,7 @@ class IniFile
     end
 
     (other_keys - my_keys).each do |key|
-      @ini[key] = other[key]
+      @ini[key] = other[key] ? other[key].dup : {}
     end
 
     self
