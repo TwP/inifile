@@ -557,5 +557,21 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal 3, ini_file['section_one']['one']
     assert_equal 5, ini_file['section_five']['five']
   end
+  
+  def test_integer_typecast
+    ini_file = IniFile.load('test/data/typecast.ini')
+    assert_equal 146, ini_file['section_one']['int1']
+    assert_equal "00342", ini_file['section_one']['string1']
+  end
+  
+  def test_float_typecast
+    ini_file = IniFile.load('test/data/typecast.ini')
+    assert_equal 0.35, ini_file['section_one']['float1']
+    assert_equal 0.634, ini_file['section_one']['float2']
+    assert_equal 234.646, ini_file['section_one']['float3']
+    assert_equal "345.", ini_file['section_one']['string2']
+  end
+  
+  
 end
 
