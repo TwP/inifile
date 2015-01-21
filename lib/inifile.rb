@@ -596,10 +596,17 @@ class IniFile
       when %r/\Afalse\z/i; false
       when %r/\A\s*\z/i;   nil
       else
-        Integer(value) rescue \
-        Float(value)   rescue \
-        unescape_value(value)
+        stripped_value = value.strip
+        if stripped_value =~ /^\d*\.\d+$/
+          Float(stripped_value)
+        elsif stripped_value =~ /^[^0]\d*$/
+          Integer(stripped_value)
+        else
+          unescape_value(value)
+        end
       end
+    rescue
+      unescape_value(value)
     end
 
     # Unescape special characters found in the value string. This will convert
