@@ -50,6 +50,7 @@ class IniFile
   #   :encoding  - Encoding String for reading / writing
   #   :default   - The String name of the default global section
   #   :filename  - The filename as a String
+  #   :permissions - Permission bits to assign the new file
   #
   # Examples
   #
@@ -65,12 +66,16 @@ class IniFile
   #   IniFile.new( :content => "[global]\nfoo=bar", :comment => '#' )
   #   #=> an IniFile instance
   #
+  #   IniFile.new( :permissions => 0644 )
+  #   #=> an IniFile instance
+  #
   def initialize( opts = {} )
     @comment  = opts.fetch(:comment, ';#')
     @param    = opts.fetch(:parameter, '=')
     @encoding = opts.fetch(:encoding, nil)
     @default  = opts.fetch(:default, 'global')
     @filename = opts.fetch(:filename, nil)
+    @permissions = opts.fetch(:permissions, nil)
     content   = opts.fetch(:content, nil)
 
     @ini = Hash.new {|h,k| h[k] = Hash.new}
@@ -88,14 +93,16 @@ class IniFile
   # opts - The default options Hash
   #        :filename - The filename as a String
   #        :encoding - The encoding as a String
+  #        :permissions - The permission bits as a Fixnum
   #
   # Returns this IniFile instance.
   def write( opts = {} )
     filename = opts.fetch(:filename, @filename)
     encoding = opts.fetch(:encoding, @encoding)
+    permissions = opts.fetch(:permissions, @permissions)
     mode = encoding ? "w:#{encoding}" : "w"
 
-    File.open(filename, mode) do |f|
+    File.open(filename, mode, permissions) do |f|
       @ini.each do |section,hash|
         f.puts "[#{section}]"
         hash.each {|param,val| f.puts "#{param} #{@param} #{escape_value val}"}
@@ -625,4 +632,3 @@ class IniFile
   end
 
 end  # IniFile
-
