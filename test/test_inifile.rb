@@ -557,5 +557,19 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal 3, ini_file['section_one']['one']
     assert_equal 5, ini_file['section_five']['five']
   end
+
+  def test_switch_support_read
+    ini_file = IniFile.load('test/data/switch.ini')
+
+    assert_equal({}, ini_file['section_six']['switch_support'])
+  end
+
+  def test_switch_support_write
+    ini_file = IniFile.new(:filename => "test/data/tmp.ini")
+    ini_file["foo"] = {"switch_support" => {}}
+    ini_file.save
+
+    assert File.read("test/data/tmp.ini") =~ /^switch_support$/
+  end
 end
 

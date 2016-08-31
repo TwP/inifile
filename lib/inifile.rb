@@ -98,7 +98,13 @@ class IniFile
     File.open(filename, mode) do |f|
       @ini.each do |section,hash|
         f.puts "[#{section}]"
-        hash.each {|param,val| f.puts "#{param} #{@param} #{escape_value val}"}
+        hash.each {|param,val|
+          if val.class == Hash and val.empty?
+            f.puts param
+          else
+            f.puts "#{param} #{@param} #{escape_value val}"
+          end
+        }
         f.puts
       end
     end
@@ -428,6 +434,7 @@ class IniFile
       @section_regexp  = %r/\A\s*\[([^\]]+)\]#{comment}/
       @ignore_regexp   = %r/\A#{comment}/
       @property_regexp = %r/\A(.*?)(?<!\\)#{param}(.*)\z/
+      @switch_regexp   = %r/\A\s*([\w\.]+)\s*#{comment}/
 
       @open_quote      = %r/\A\s*(".*)\z/
       @close_quote     = %r/\A(.*(?<!\\)")#{comment}/
@@ -528,12 +535,14 @@ class IniFile
             error if property.empty?
 
             continuation = parse_value $2
+          when @switch_regexp
+            #self.property = $1.strip
+            self.section[$1.strip] = {}
           else
             error
           end
         end
       end
-
       # check here if we have a dangling value ... usually means we have an
       # unmatched open quote
       if leading_quote?

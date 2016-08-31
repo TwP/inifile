@@ -16,11 +16,23 @@ More information about INI files can be found on the [Wikipedia Page](http://en.
 
 ### Properties
 
-The basic element contained in an INI file is the property. Every property has
+A basic element contained in an INI file is the property. Every property has
 a name and a value, delimited by an equals sign *=*. The name appears to the
 left of the equals sign and the value to the right.
 
     name=value
+
+### Switches
+
+Switches are sometimes present in INI files to indicate whether a feature
+should be on or off.  Switches are made up by a single word on a line on its
+own.
+
+    name
+
+Switches are represented internally as an empty hash `{}` to avoid clashing
+with other values and are deactivated by removing the line from the file 
+completely.
 
 ### Sections
 
@@ -49,6 +61,7 @@ A typical INI file might look like this:
     # another comment
     var1 = baz
     var2 = shoodle
+    a_switch
 
 
 Implementation
