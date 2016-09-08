@@ -272,6 +272,7 @@ class TestIniFile < Test::Unit::TestCase
 
   def test_initialize_from_hash
     hash = {
+      'value' => 'bat',
       'section one' => {
         'foo' => 'bar',
         'baz' => 'buz'
@@ -296,7 +297,23 @@ class TestIniFile < Test::Unit::TestCase
     assert_equal '7e6ff3', ini_file['colors']['perrywinkle']
     assert_equal '4682b4', ini_file['colors']['steelblue']
 
+    assert_equal 'bat', ini_file['global']['value']
+
     assert_empty ini_file['empty']
+  end
+
+  def test_to_s
+    hash = {
+      'one' => 'bar',
+      'two' => 'bat',
+      'section one' => {
+        'foo' => 'baz',
+      }
+    }
+
+    ini_file = IniFile.new(:content => hash)
+
+    assert_equal "one = bar\ntwo = bat\n[section one]\nfoo = baz\n", ini_file.to_s
   end
 
   def test_sections
@@ -458,9 +475,6 @@ class TestIniFile < Test::Unit::TestCase
 
   def test_merge_invalid_hash
     bad_hash = { 'section_one' => [1, 2, 3, 4] }
-    assert_raise(IniFile::Error) { @ini_file.merge(bad_hash) }
-
-    bad_hash = { 'foo' => 'bar' }
     assert_raise(IniFile::Error) { @ini_file.merge(bad_hash) }
 
     not_a_hash = [['section_one', ['foo','bar'], ['baz', 'buz']]]
