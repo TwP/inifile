@@ -133,7 +133,10 @@ class IniFile
   # Returns this IniFile converted to a String.
   def to_s
     s = []
-    @ini.each do |section,hash|
+    hash = @ini.dup
+    default = hash.delete(@default)
+    default.each {|param,val| s << "#{param} #{@param} #{escape_value val}"}
+    hash.each do |section,hash|
       s << "[#{section}]"
       hash.each {|param,val| s << "#{param} #{@param} #{escape_value val}"}
       s << ""
@@ -188,14 +191,16 @@ class IniFile
     end
 
     (other_keys - my_keys).each do |key|
-      @ini[key] = case other[key]
-        when Hash
-          other[key].dup
-        when nil
-          {}
-        else
-          raise Error, "cannot merge section #{key.inspect} - unsupported type: #{other[key].class.name}"
-        end
+      case other[key]
+      when Hash
+        @ini[key] = other[key].dup
+      when nil
+        @ini[key] = {}
+      when String
+        @ini[@default].merge!({key => other[key]})
+      else
+        raise Error, "cannot merge section #{key.inspect} - unsupported type: #{other[key].class.name}"
+      end
     end
 
     self
