@@ -6,7 +6,7 @@ class IniFile
   include Enumerable
 
   class Error < StandardError; end
-  VERSION = '3.0.0'
+  VERSION = '3.0.1'
 
   # Public: Open an INI file and load the contents.
   #
@@ -52,6 +52,7 @@ class IniFile
   #   :default   - The String name of the default global section
   #   :filename  - The filename as a String
   #   :slash_lc  - Use backslash as a line continuation
+  #   :separator - what to output between the key, operator, and value
   #
   # Examples
   #
@@ -68,13 +69,14 @@ class IniFile
   #   #=> an IniFile instance
   #
   def initialize( opts = {} )
-    @comment  = opts.fetch(:comment, ';#')
-    @param    = opts.fetch(:parameter, '=')
-    @encoding = opts.fetch(:encoding, nil)
-    @default  = opts.fetch(:default, 'global')
-    @filename = opts.fetch(:filename, nil)
-    @slash_lc = opts.fetch(:slash_lc, true)
-    content   = opts.fetch(:content, nil)
+    @comment   = opts.fetch(:comment, ';#')
+    @param     = opts.fetch(:parameter, '=')
+    @encoding  = opts.fetch(:encoding, nil)
+    @default   = opts.fetch(:default, 'global')
+    @filename  = opts.fetch(:filename, nil)
+    @slash_lc  = opts.fetch(:slash_lc, true)
+    @separator = opts.fetch(:separator, ' ')
+    content    = opts.fetch(:content, nil)
 
     @ini = Hash.new {|h,k| h[k] = Hash.new}
 
@@ -101,7 +103,7 @@ class IniFile
     File.open(filename, mode) do |f|
       @ini.each do |section,hash|
         f.puts "[#{section}]"
-        hash.each {|param,val| f.puts "#{param} #{@param} #{escape_value val}"}
+        hash.each {|param,val| f.puts "#{param}#{@separator}#{@param}#{@separator}#{escape_value val}"}
         f.puts
       end
     end
@@ -138,7 +140,7 @@ class IniFile
     s = []
     @ini.each do |section,hash|
       s << "[#{section}]"
-      hash.each {|param,val| s << "#{param} #{@param} #{escape_value val}"}
+      hash.each {|param,val| s << "#{param}#{@separator}#{@param}#{@separator}#{escape_value val}"}
       s << ""
     end
     s.join("\n")
