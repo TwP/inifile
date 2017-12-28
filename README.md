@@ -166,11 +166,17 @@ To run the tests:
 Examples
 --------
 
+Load from a file:
+
     require 'inifile'
     myini = IniFile.load('mytest.ini')
     myini.each_section do |section|
       puts "I want #{myini[section]['somevar']} printed here!"
     end
+
+Read INI content from a string:
+
+    myini = IniFile.new(:content => "[global]\nfoo=bar")
 
 Contributing
 ------------
