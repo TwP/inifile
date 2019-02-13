@@ -50,6 +50,7 @@ class IniFile
   #   :encoding  - Encoding String for reading / writing
   #   :default   - The String name of the default global section
   #   :filename  - The filename as a String
+  #   :force_array  - Keep all values with same key in an array
   #
   # Examples
   #
@@ -71,6 +72,7 @@ class IniFile
     @encoding = opts.fetch(:encoding, nil)
     @default  = opts.fetch(:default, 'global')
     @filename = opts.fetch(:filename, nil)
+    @force_array = opts.fetch(:force_array, nil)
     content   = opts.fetch(:content, nil)
 
     @ini = Hash.new {|h,k| h[k] = Hash.new}
@@ -98,7 +100,15 @@ class IniFile
     File.open(filename, mode) do |f|
       @ini.each do |section,hash|
         f.puts "[#{section}]"
-        hash.each {|param,val| f.puts "#{param} #{@param} #{escape_value val}"}
+        hash.each do |param,val|
+          if !val.is_a?(Array) || !@force_array
+            f.puts "#{param} #{@param} #{escape_value val}"
+          else
+            val.each do |subval|
+              f.puts "#{param} #{@param} #{escape_value subval}"
+            end
+          end
+        end
         f.puts
       end
     end
@@ -396,7 +406,7 @@ class IniFile
   #
   # Returns this IniFile.
   def parse( content )
-    parser = Parser.new(@ini, @param, @comment, @default)
+    parser = Parser.new(@ini, @param, @comment, @default, @force_array)
     parser.parse(content)
     self
   end
@@ -419,9 +429,10 @@ class IniFile
     # comment - String containing the comment character(s)
     # default - The String name of the default global section
     #
-    def initialize( hash, param, comment, default )
+    def initialize( hash, param, comment, default, force_array)
       @hash = hash
       @default = default
+      @force_array = force_array
 
       comment = comment.to_s.empty? ? "\\z" : "\\s*(?:[#{comment}].*)?\\z"
 
@@ -557,7 +568,13 @@ class IniFile
 
       self.value = $1 if value =~ %r/\A"(.*)(?<!\\)"\z/m
 
-      section[property] = typecast(value)
+      if section[property].nil? || !@force_array
+        section[property] = typecast(value)
+      elsif section[property].is_a?(Array)
+        section[property] << typecast(value)
+      else
+        section[property] = [section[property], typecast(value)]
+      end
 
       self.property = nil
       self.value = nil

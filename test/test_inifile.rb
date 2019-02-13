@@ -559,3 +559,25 @@ class TestIniFile < Test::Unit::TestCase
   end
 end
 
+class TestCustomIniFile < Test::Unit::TestCase
+
+  def setup
+    FileUtils.rm_rf "test/data/tmp.ini"
+    FileUtils.cp    "test/data/good.ini", "test/data/tmp.ini"
+  end
+
+  def test_force_array
+    ini_file = IniFile.load('test/data/force_array.ini', force_array: true)
+    assert_equal 1, ini_file['section_one']['one']
+    assert_equal [2, "zinga", 'new foils'], ini_file['section_one']['two']
+
+    tmp = 'test/data/tmp.ini'
+    File.delete tmp if Kernel.test(?f, tmp)
+
+    ini_file.save(:filename => tmp)
+
+    lines = IO.readlines(tmp).map(&:chomp).keep_if{|x| x.size > 0}
+    assert_equal 5, lines.size
+    assert_equal ["[section_one]", "one = 1", "two = 2", "two = zinga", "two = new foils"], lines
+  end
+end
