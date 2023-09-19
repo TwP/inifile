@@ -58,26 +58,17 @@ class TestIniFile < Test::Unit::TestCase
   def test_clone
     clone = @ini_file.clone
     assert_equal @ini_file, clone
-    assert !clone.tainted?
     assert !clone.frozen?
 
     # the clone should be completely independent of the original
     clone['new_section']['one'] = 1
     assert_not_equal @ini_file, clone
 
-    # the tainted state is copied to clones
-    @ini_file.taint
-    assert @ini_file.tainted?
-
-    clone = @ini_file.clone
-    assert clone.tainted?
-
     # the frozen state is also copied to clones
     @ini_file.freeze
     assert @ini_file.frozen?
 
     clone = @ini_file.clone
-    assert clone.tainted?
     assert clone.frozen?
   end
 
@@ -94,26 +85,17 @@ class TestIniFile < Test::Unit::TestCase
   def test_dup
     dup = @ini_file.dup
     assert_equal @ini_file, dup
-    assert !dup.tainted?
     assert !dup.frozen?
 
     # the duplicate should be completely independent of the original
     dup['new_section']['one'] = 1
     assert_not_equal @ini_file, dup
 
-    # the tainted state is copied to duplicates
-    @ini_file.taint
-    assert @ini_file.tainted?
-
-    dup = @ini_file.dup
-    assert dup.tainted?
-
     # the frozen state, however, is not
     @ini_file.freeze
     assert @ini_file.frozen?
 
     dup = @ini_file.dup
-    assert dup.tainted?
     assert !dup.frozen?
   end
 
@@ -309,20 +291,6 @@ class TestIniFile < Test::Unit::TestCase
 
     ini_file = IniFile.new(:filename => 'temp.ini')
     assert_equal [], ini_file.sections
-  end
-
-  def test_taint
-    assert_equal false, @ini_file.tainted?
-    @ini_file.each_section do |s|
-      assert_equal false, @ini_file[s].tainted?
-    end
-
-    @ini_file.taint
-
-    assert_equal true, @ini_file.tainted?
-    @ini_file.each_section do |s|
-      assert_equal true, @ini_file[s].tainted?
-    end
   end
 
   def test_write

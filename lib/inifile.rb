@@ -323,34 +323,21 @@ class IniFile
     self
   end
 
-  # Public: Mark this IniFile as tainted -- this will traverse each section
-  # marking each as tainted.
-  #
-  # Returns this IniFile.
-  def taint
-    super
-    @ini.each_value {|h| h.taint}
-    @ini.taint
-    self
-  end
-
   # Public: Produces a duplicate of this IniFile. The duplicate is independent
   # of the original -- i.e. the duplicate can be modified without changing the
-  # original. The tainted state of the original is copied to the duplicate.
+  # original.
   #
   # Returns a new IniFile.
   def dup
     other = super
     other.instance_variable_set(:@ini, Hash.new {|h,k| h[k] = Hash.new})
     @ini.each_pair {|s,h| other[s].merge! h}
-    other.taint if self.tainted?
     other
   end
 
   # Public: Produces a duplicate of this IniFile. The duplicate is independent
   # of the original -- i.e. the duplicate can be modified without changing the
-  # original. The tainted state and the frozen state of the original is copied
-  # to the duplicate.
+  # original. The frozen state of the original is copied to the duplicate.
   #
   # Returns a new IniFile.
   def clone
